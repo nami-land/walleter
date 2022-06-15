@@ -3,6 +3,7 @@ module neco-wallet-center
 go 1.18
 
 require (
+	github.com/grpc-ecosystem/go-grpc-middleware v1.3.0
 	github.com/sirupsen/logrus v1.8.1
 	google.golang.org/grpc v1.47.0
 	google.golang.org/protobuf v1.28.0
