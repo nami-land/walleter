@@ -3,6 +3,7 @@ package model
 import (
 	"context"
 	"fmt"
+	log "github.com/sirupsen/logrus"
 	"gorm.io/gorm"
 	"neco-wallet-center/internal/comm"
 )
@@ -10,16 +11,22 @@ import (
 // Wallet 钱包
 type Wallet struct {
 	gorm.Model       `swagger-ignore:"true"`
-	AccountId        string           `json:"account_id" gorm:"unique; not null"` // 玩家账户ID
+	GameClient       int              `json:"game_client"`
+	AccountId        uint             `json:"account_id" gorm:"unique; not null"` // 玩家账户ID
 	PublicAddress    string           `json:"address" gorm:"unique;not null"`     // 玩家的钱包地址
 	ERC20TokenData   []ERC20TokenData `json:"erc_20_token_data" gorm:"foreignKey:AccountId;references:AccountId"`
 	ERC1155TokenData ERC1155TokenData `json:"erc_1155_token_data" gorm:"foreignKey:AccountId;references:AccountId"`
 	CheckSign        string           `json:"check_sign" gorm:"type:varchar(128);not null;comment:'安全签名'"`
 }
 
+func (w Wallet) TableName() string {
+	return fmt.Sprintf("t_wallet_%d", w.GameClient)
+}
+
 type ERC20TokenData struct {
 	gorm.Model    `swagger-ignore:"true"`
-	AccountId     string  `json:"account_id"`     //往家账户的ID
+	GameClient    int     `json:"game_client"`
+	AccountId     uint    `json:"account_id"`     //往家账户的ID
 	TokenType     string  `json:"token_type"`     //代币类型 NFISH, BUSD
 	TokenBalance  float64 `json:"token_balance"`  // 玩家当前代币的余额
 	TokenIncome   float64 `json:"token_income"`   // 玩家通过玩游戏的总收入
@@ -29,17 +36,27 @@ type ERC20TokenData struct {
 	TokenFee      float64 `json:"token_fee"`      // 玩家使用当前代币付的总手续费
 }
 
+func (s ERC20TokenData) TableName() string {
+	return fmt.Sprintf("t_erc20_token_data_%d", s.GameClient)
+}
+
 type ERC1155TokenData struct {
 	gorm.Model `swagger-ignore:"true"`
-	AccountId  string `json:"account_id"` //往家账户的ID
+	GameClient int    `json:"game_client"`
+	AccountId  uint   `json:"account_id"` //往家账户的ID
 	Ids        string `json:"ids"`        //玩家拥有的NFT所有的id
 	Values     string `json:"values"`     // 玩家拥有的NFT的数量
+}
+
+func (s ERC1155TokenData) TableName() string {
+	return fmt.Sprintf("t_erc1155_token_data_%d", s.GameClient)
 }
 
 // ERC20WalletLog 钱包流水日志
 type ERC20WalletLog struct {
 	gorm.Model     `swagger-ignore:"true"`
-	AccountId      string  `json:"account_id"` //往家账户的ID
+	GameClient     int     `json:"game_client"`
+	AccountId      uint    `json:"account_id"` //往家账户的ID
 	PublicAddress  string  `json:"address" gorm:"type:varchar(256);uniqueIndex;not null;comment:'钱包地址'"`
 	BusinessModule string  `json:"business_module" gorm:"type:varchar(64);not null;comment:'业务模块'"`
 	ActionType     string  `json:"action_type" gorm:"type:varchar(64);not null;comment:'操作类型'"`
@@ -51,10 +68,15 @@ type ERC20WalletLog struct {
 	DisposeWallet  Wallet  `json:"dispose_wallet" gorm:"type:json;not null;comment:'变更后的钱包数据'"`
 }
 
+func (s ERC20WalletLog) TableName() string {
+	return fmt.Sprintf("t_erc20_wallet_log_%d", s.GameClient)
+}
+
 // ERC1155WalletLog 钱包流水日志
 type ERC1155WalletLog struct {
 	gorm.Model     `swagger-ignore:"true"`
-	AccountId      string  `json:"account_id"` //往家账户的ID
+	GameClient     int     `json:"game_client"`
+	AccountId      uint    `json:"account_id"` //往家账户的ID
 	PublicAddress  string  `json:"address" gorm:"type:varchar(256);uniqueIndex;not null;comment:'钱包地址'"`
 	BusinessModule string  `json:"business_module" gorm:"type:varchar(64);not null;comment:'业务模块'"`
 	ActionType     string  `json:"action_type" gorm:"type:varchar(64);not null;comment:'操作类型'"`
@@ -66,6 +88,10 @@ type ERC1155WalletLog struct {
 	DisposeWallet  Wallet  `json:"dispose_wallet" gorm:"type:json;not null;comment:'变更后的钱包数据'"`
 }
 
+func (s ERC1155WalletLog) TableName() string {
+	return fmt.Sprintf("t_erc1155_wallet_log_%d", s.GameClient)
+}
+
 type walletDA0 struct{}
 
 var WalletDAO = &walletDA0{}
@@ -74,34 +100,41 @@ func (dao *walletDA0) getWalletTableName(gameClient comm.GameClient) string {
 	return fmt.Sprintf("t_wallet_%d", gameClient)
 }
 
-func (dao walletDA0) InitWallet(ctx context.Context, gameClient comm.GameClient, accountId string, publicAddress string) bool {
-	err := getDb(ctx).Transaction(
-		func(tx1 *gorm.DB) error {
-			//首先创建data
-			var erc20Data = ERC20TokenData{
-				AccountId:     accountId,
-				TokenType:     comm.NFISH.String(),
-				TokenBalance:  0,
-				TokenIncome:   0,
-				TokenSpend:    0,
-				TokenDeposit:  0,
-				TokenWithdraw: 0,
-				TokenFee:      0,
-			}
-			if err := tx1.Create(&erc20Data).Error; err != nil {
-				return err
-			}
-
-			var erc1155Data = ERC1155TokenData{
-				AccountId: accountId,
-				Ids:       "",
-				Values:    "",
-			}
-			if err := tx1.Create(&erc1155Data).Error; err != nil {
-				return err
-			}
-			return nil
-		})
+func (dao walletDA0) InitWallet(ctx context.Context, gameClient comm.GameClient, accountId uint, publicAddress string) bool {
+	err := getDb(ctx).Transaction(func(tx1 *gorm.DB) error {
+		//首先创建data
+		nfishData := ERC20TokenData{
+			Model:      gorm.Model{},
+			GameClient: int(gameClient),
+			AccountId:  accountId,
+			TokenType:  comm.NFISH.String(),
+		}
+		busdData := ERC20TokenData{
+			Model:      gorm.Model{},
+			GameClient: int(gameClient),
+			AccountId:  accountId,
+			TokenType:  comm.BUSD.String(),
+		}
+		nftData := ERC1155TokenData{
+			Model:      gorm.Model{},
+			GameClient: int(gameClient),
+			AccountId:  accountId,
+		}
+		wallet := Wallet{
+			Model:            gorm.Model{},
+			GameClient:       int(gameClient),
+			AccountId:        accountId,
+			PublicAddress:    publicAddress,
+			ERC20TokenData:   []ERC20TokenData{nfishData, busdData},
+			ERC1155TokenData: nftData,
+			CheckSign:        "",
+		}
+		if err := tx1.Create(&wallet).Error; err != nil {
+			log.Errorf("%v", err)
+			return err
+		}
+		return nil
+	})
 	if err != nil {
 		return false
 	}
