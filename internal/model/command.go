@@ -10,7 +10,7 @@ type WalletCommand struct {
 	ERC20Commands  []ERC20Command
 	ERC1155Command ERC1155Command
 	BusinessModule string
-	ActionType     string
+	ActionType     comm.WalletActionType
 	FeeCommands    []ERC20Command
 }
 

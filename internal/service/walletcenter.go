@@ -19,7 +19,12 @@ func (s walletCenterService) HandleWalletCommand(ctx context.Context, command mo
 		return errors.New("game client is invalid")
 	}
 
-	return initWallet(ctx, command)
+	switch command.ActionType {
+	case comm.Initialize:
+		return initWallet(ctx, command)
+	default:
+		return updateWallet(ctx, command)
+	}
 }
 
 func initWallet(ctx context.Context, command model.WalletCommand) error {
@@ -81,4 +86,8 @@ func initWallet(ctx context.Context, command model.WalletCommand) error {
 		return nil
 	})
 	return err
+}
+
+func updateWallet(ctx context.Context, command model.WalletCommand) error {
+	return nil
 }
