@@ -50,3 +50,24 @@ type GameClient int
 const (
 	NecoFishing = 0
 )
+
+type WalletLogStatus int
+
+const (
+	Pending WalletLogStatus = 0
+	Done    WalletLogStatus = 1
+	Failed  WalletLogStatus = 2
+)
+
+func (s WalletLogStatus) String() string {
+	switch s {
+	case Pending:
+		return "Pending"
+	case Done:
+		return "Done"
+	case Failed:
+		return "Failed"
+	default:
+		return "Pending"
+	}
+}

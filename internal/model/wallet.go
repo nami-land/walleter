@@ -156,34 +156,16 @@ func (dao walletDA0) InitWallet(ctx context.Context, gameClient comm.GameClient,
 	return true
 }
 
-type erc20TokenDataDAO struct{}
-
-var ERC20TokenDataDAO = &erc20TokenDataDAO{}
-
-func (dao *erc20TokenDataDAO) getERC20TokenDataTableName(gameClient comm.GameClient) string {
-	return fmt.Sprintf("t_erc20_token_data_%d", gameClient)
-}
-
-type erc1155TokenDataDAO struct{}
-
-var ERC1155TokenDataDAO = &erc1155TokenDataDAO{}
-
-func (dao *erc1155TokenDataDAO) getERC1155TokenDataTableName(gameClient comm.GameClient) string {
-	return fmt.Sprintf("t_erc1155_token_data_%d", gameClient)
-}
-
 type erc20WalletLogDAO struct{}
 
 var ERC20WalletLogDAO = &erc20WalletLogDAO{}
 
-func (dao *erc20WalletLogDAO) getERC20WalletLogTableName(gameClient comm.GameClient) string {
-	return fmt.Sprintf("t_erc20_wallet_log_%d", gameClient)
+func (s ERC20WalletLog) InsertERC20WalletLog(
+	gameClient comm.GameClient, accountId string,
+) {
+
 }
 
 type erc1155WalletLogDAO struct{}
 
 var ERC1155WalletLogDAO = &erc1155WalletLogDAO{}
-
-func (dao *erc1155WalletLogDAO) getERC1155WalletLogTableName(gameClient comm.GameClient) string {
-	return fmt.Sprintf("t_erc1155_wallet_log_%d", gameClient)
-}
