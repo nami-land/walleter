@@ -65,7 +65,7 @@ type ERC20WalletLog struct {
 	Fee            float64 `json:"fee"`   // 手续费
 	Status         string  `json:"status" gorm:"type:varchar(64);not null;comment:处理状态"`
 	OriginalWallet Wallet  `json:"original_wallet" gorm:"type:json;not null;comment:'变更前的钱包数据'"`
-	DisposeWallet  Wallet  `json:"dispose_wallet" gorm:"type:json;not null;comment:'变更后的钱包数据'"`
+	SettledWallet  Wallet  `json:"settled_wallet" gorm:"type:json;not null;comment:'变更后的钱包数据'"`
 }
 
 func (s ERC20WalletLog) TableName() string {
@@ -85,7 +85,7 @@ type ERC1155WalletLog struct {
 	Fee            float64 `json:"fee"`    // 手续费
 	Status         string  `json:"status" gorm:"type:varchar(64);not null;comment:处理状态"`
 	OriginalWallet Wallet  `json:"original_wallet" gorm:"type:json;not null;comment:'变更前的钱包数据'"`
-	DisposeWallet  Wallet  `json:"dispose_wallet" gorm:"type:json;not null;comment:'变更后的钱包数据'"`
+	SettledWallet  Wallet  `json:"settled_wallet" gorm:"type:json;not null;comment:'变更后的钱包数据'"`
 }
 
 func (s ERC1155WalletLog) TableName() string {
@@ -132,6 +132,21 @@ func (dao walletDA0) InitWallet(ctx context.Context, gameClient comm.GameClient,
 		if err := tx1.Create(&wallet).Error; err != nil {
 			log.Errorf("%v", err)
 			return err
+		}
+
+		erc20Log := ERC20WalletLog{
+			Model:          gorm.Model{},
+			GameClient:     int(gameClient),
+			AccountId:      accountId,
+			PublicAddress:  publicAddress,
+			BusinessModule: "",
+			ActionType:     comm.Initialize.String(),
+			TokenType:      comm.NFISH.String(),
+			Value:          0,
+			Fee:            0,
+			Status:         "",
+			OriginalWallet: Wallet{},
+			SettledWallet:  Wallet{},
 		}
 		return nil
 	})
