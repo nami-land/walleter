@@ -2,13 +2,14 @@ package model
 
 import (
 	"context"
+	"database/sql/driver"
+	"encoding/json"
 	"fmt"
 	log "github.com/sirupsen/logrus"
 	"gorm.io/gorm"
 	"neco-wallet-center/internal/comm"
 )
 
-// Wallet 钱包
 type Wallet struct {
 	gorm.Model       `swagger-ignore:"true"`
 	GameClient       int              `json:"game_client"`
@@ -19,8 +20,17 @@ type Wallet struct {
 	CheckSign        string           `json:"check_sign" gorm:"type:varchar(128);not null;comment:'安全签名'"`
 }
 
-func (w Wallet) TableName() string {
-	return fmt.Sprintf("t_wallet_%d", w.GameClient)
+func (wallet Wallet) TableName() string {
+	return fmt.Sprintf("t_wallet_%d", wallet.GameClient)
+}
+
+func (wallet Wallet) Value() (driver.Value, error) {
+	b, err := json.Marshal(wallet)
+	return string(b), err
+}
+
+func (wallet *Wallet) Scan(input interface{}) error {
+	return json.Unmarshal(input.([]byte), wallet)
 }
 
 type ERC20TokenData struct {
@@ -52,45 +62,14 @@ func (s ERC1155TokenData) TableName() string {
 	return fmt.Sprintf("t_erc1155_token_data_%d", s.GameClient)
 }
 
-// ERC20WalletLog 钱包流水日志
-type ERC20WalletLog struct {
-	gorm.Model     `swagger-ignore:"true"`
-	GameClient     int     `json:"game_client"`
-	AccountId      uint    `json:"account_id"` //往家账户的ID
-	PublicAddress  string  `json:"address" gorm:"type:varchar(256);uniqueIndex;not null;comment:'钱包地址'"`
-	BusinessModule string  `json:"business_module" gorm:"type:varchar(64);not null;comment:'业务模块'"`
-	ActionType     string  `json:"action_type" gorm:"type:varchar(64);not null;comment:'操作类型'"`
-	TokenType      string  `json:"token_type;comment:'变更的代币数据'"`
-	Value          float64 `json:"value"` // 代币金额
-	Fee            float64 `json:"fee"`   // 手续费
-	Status         string  `json:"status" gorm:"type:varchar(64);not null;comment:处理状态"`
-	OriginalWallet Wallet  `json:"original_wallet" gorm:"type:json;not null;comment:'变更前的钱包数据'"`
-	SettledWallet  Wallet  `json:"settled_wallet" gorm:"type:json;not null;comment:'变更后的钱包数据'"`
-}
-
-func (s ERC20WalletLog) TableName() string {
-	return fmt.Sprintf("t_erc20_wallet_log_%d", s.GameClient)
-}
-
-// ERC1155WalletLog 钱包流水日志
-type ERC1155WalletLog struct {
-	gorm.Model     `swagger-ignore:"true"`
-	GameClient     int     `json:"game_client"`
-	AccountId      uint    `json:"account_id"` //往家账户的ID
-	PublicAddress  string  `json:"address" gorm:"type:varchar(256);uniqueIndex;not null;comment:'钱包地址'"`
-	BusinessModule string  `json:"business_module" gorm:"type:varchar(64);not null;comment:'业务模块'"`
-	ActionType     string  `json:"action_type" gorm:"type:varchar(64);not null;comment:'操作类型'"`
-	Ids            string  `json:"ids;comment:'变更的NFT IDs'"`
-	Values         float64 `json:"values"` // 变更的NFT数量
-	Fee            float64 `json:"fee"`    // 手续费
-	Status         string  `json:"status" gorm:"type:varchar(64);not null;comment:处理状态"`
-	OriginalWallet Wallet  `json:"original_wallet" gorm:"type:json;not null;comment:'变更前的钱包数据'"`
-	SettledWallet  Wallet  `json:"settled_wallet" gorm:"type:json;not null;comment:'变更后的钱包数据'"`
-}
-
-func (s ERC1155WalletLog) TableName() string {
-	return fmt.Sprintf("t_erc1155_wallet_log_%d", s.GameClient)
-}
+//func (s ERC1155TokenData) Value() (driver.Value, error) {
+//	b, err := json.Marshal(s)
+//	return string(b), err
+//}
+//
+//func (s *ERC1155TokenData) Scan(input interface{}) error {
+//	return json.Unmarshal(input.([]byte), s)
+//}
 
 type walletDA0 struct{}
 
@@ -102,24 +81,77 @@ func (dao *walletDA0) getWalletTableName(gameClient comm.GameClient) string {
 
 func (dao walletDA0) InitWallet(ctx context.Context, gameClient comm.GameClient, accountId uint, publicAddress string) bool {
 	err := getDb(ctx).Transaction(func(tx1 *gorm.DB) error {
-		//首先创建data
 		nfishData := ERC20TokenData{
 			Model:      gorm.Model{},
 			GameClient: int(gameClient),
 			AccountId:  accountId,
 			TokenType:  comm.NFISH.String(),
 		}
+		nfishDataWalletLog := ERC20WalletLog{
+			Model:          gorm.Model{},
+			GameClient:     int(gameClient),
+			AccountId:      accountId,
+			BusinessModule: "Initialization",
+			ActionType:     comm.Initialize.String(),
+			TokenType:      comm.NFISH.String(),
+			Value:          0,
+			Fee:            0,
+			Status:         comm.Pending.String(),
+			OriginalWallet: Wallet{},
+			SettledWallet:  Wallet{},
+		}
+		nfishWalletLog, err := ERC20WalletLogDAO.InsertERC20WalletLog(tx1, &nfishDataWalletLog)
+		if err != nil {
+			return err
+		}
+
 		busdData := ERC20TokenData{
 			Model:      gorm.Model{},
 			GameClient: int(gameClient),
 			AccountId:  accountId,
 			TokenType:  comm.BUSD.String(),
 		}
+		busdDataWalletLog := ERC20WalletLog{
+			Model:          gorm.Model{},
+			GameClient:     int(gameClient),
+			AccountId:      accountId,
+			BusinessModule: "Initialization",
+			ActionType:     comm.Initialize.String(),
+			TokenType:      comm.BUSD.String(),
+			Value:          0,
+			Fee:            0,
+			Status:         comm.Pending.String(),
+			OriginalWallet: Wallet{},
+			SettledWallet:  Wallet{},
+		}
+		busdWalletLog, err := ERC20WalletLogDAO.InsertERC20WalletLog(tx1, &busdDataWalletLog)
+		if err != nil {
+			return err
+		}
+
 		nftData := ERC1155TokenData{
 			Model:      gorm.Model{},
 			GameClient: int(gameClient),
 			AccountId:  accountId,
 		}
+		nftLog := ERC1155WalletLog{
+			Model:          gorm.Model{},
+			GameClient:     int(gameClient),
+			AccountId:      accountId,
+			BusinessModule: "Initialization",
+			ActionType:     comm.Initialize.String(),
+			Ids:            "",
+			Values:         0,
+			Fee:            0,
+			Status:         comm.Pending.String(),
+			OriginalWallet: Wallet{},
+			SettledWallet:  Wallet{},
+		}
+		nftWalletLog, err := ERC1155WalletLogDAO.InsertERC1155WalletLog(tx1, &nftLog)
+		if err != nil {
+			return err
+		}
+
 		wallet := Wallet{
 			Model:            gorm.Model{},
 			GameClient:       int(gameClient),
@@ -134,20 +166,26 @@ func (dao walletDA0) InitWallet(ctx context.Context, gameClient comm.GameClient,
 			return err
 		}
 
-		erc20Log := ERC20WalletLog{
-			Model:          gorm.Model{},
-			GameClient:     int(gameClient),
-			AccountId:      accountId,
-			PublicAddress:  publicAddress,
-			BusinessModule: "",
-			ActionType:     comm.Initialize.String(),
-			TokenType:      comm.NFISH.String(),
-			Value:          0,
-			Fee:            0,
-			Status:         "",
-			OriginalWallet: Wallet{},
-			SettledWallet:  Wallet{},
+		nfishWalletLog.SettledWallet = wallet
+		nfishWalletLog.Status = comm.Done.String()
+		_, err = ERC20WalletLogDAO.UpdateERC20WalletLogStatus(tx1, nfishWalletLog)
+		if err != nil {
+			return err
 		}
+		busdWalletLog.SettledWallet = wallet
+		busdWalletLog.Status = comm.Done.String()
+		_, err = ERC20WalletLogDAO.UpdateERC20WalletLogStatus(tx1, busdWalletLog)
+		if err != nil {
+			return err
+		}
+
+		nftWalletLog.SettledWallet = wallet
+		nftWalletLog.Status = comm.Done.String()
+		_, err = ERC1155WalletLogDAO.UpdateERC1155WalletLogStatus(tx1, nftWalletLog)
+		if err != nil {
+			return err
+		}
+
 		return nil
 	})
 	if err != nil {
@@ -155,17 +193,3 @@ func (dao walletDA0) InitWallet(ctx context.Context, gameClient comm.GameClient,
 	}
 	return true
 }
-
-type erc20WalletLogDAO struct{}
-
-var ERC20WalletLogDAO = &erc20WalletLogDAO{}
-
-func (s ERC20WalletLog) InsertERC20WalletLog(
-	gameClient comm.GameClient, accountId string,
-) {
-
-}
-
-type erc1155WalletLogDAO struct{}
-
-var ERC1155WalletLogDAO = &erc1155WalletLogDAO{}
