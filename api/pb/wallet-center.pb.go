@@ -124,13 +124,13 @@ const (
 // Enum value maps for WalletActionType.
 var (
 	WalletActionType_name = map[int32]string{
-		0: "Income",
+		0: "TotalIncome",
 		1: "Spend",
 		3: "Deposit",
 		4: "Withdraw",
 	}
 	WalletActionType_value = map[string]int32{
-		"Income":   0,
+		"TotalIncome":   0,
 		"Spend":    1,
 		"Deposit":  3,
 		"Withdraw": 4,

@@ -14,7 +14,7 @@ func generateERC20DataArray(command model.WalletCommand) []model.ERC20TokenData 
 			Model:      gorm.Model{},
 			GameClient: int(command.GameClient),
 			AccountId:  command.AccountId,
-			TokenType:  item.Token.String(),
+			Token:      item.Token.String(),
 		}
 		result = append(result, data)
 	}
@@ -39,7 +39,7 @@ func generateERC20WalletLogArray(command model.WalletCommand, wallet model.Walle
 			GameClient:     int(command.GameClient),
 			AccountId:      command.AccountId,
 			BusinessModule: command.BusinessModule,
-			ActionType:     command.ActionType,
+			ActionType:     command.ActionType.String(),
 			TokenType:      item.Token.String(),
 			Value:          item.Value,
 			Fee:            fees,
@@ -68,7 +68,7 @@ func generateERC1155WalletLog(command model.WalletCommand, wallet model.Wallet) 
 		GameClient:     int(command.GameClient),
 		AccountId:      command.AccountId,
 		BusinessModule: command.BusinessModule,
-		ActionType:     command.ActionType,
+		ActionType:     command.ActionType.String(),
 		Ids:            utils.ConvertUintArrayToString(command.ERC1155Command.Ids),
 		Values:         utils.ConvertUintArrayToString(command.ERC1155Command.Values),
 		Fee:            fees,

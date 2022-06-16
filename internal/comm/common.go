@@ -33,6 +33,7 @@ const (
 	Spend      WalletActionType = 2
 	Deposit    WalletActionType = 3
 	Withdraw   WalletActionType = 4
+	ChargeFee  WalletActionType = 5
 )
 
 func (t WalletActionType) String() string {
@@ -40,15 +41,17 @@ func (t WalletActionType) String() string {
 	case Initialize:
 		return "Initialize"
 	case Income:
-		return "Income"
+		return "TotalIncome"
 	case Spend:
 		return "Spend"
 	case Deposit:
 		return "Deposit"
 	case Withdraw:
 		return "Withdraw"
+	case ChargeFee:
+		return "ChargeFee"
 	default:
-		return "Income"
+		return "TotalIncome"
 	}
 }
 

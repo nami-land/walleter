@@ -3,6 +3,7 @@ package service
 import (
 	"context"
 	"errors"
+	"fmt"
 	"gorm.io/gorm"
 	"neco-wallet-center/internal/comm"
 	"neco-wallet-center/internal/model"
@@ -89,5 +90,78 @@ func initWallet(ctx context.Context, command model.WalletCommand) error {
 }
 
 func updateWallet(ctx context.Context, command model.WalletCommand) error {
+	userWallet, err := model.WalletDAO.GetWallet(ctx, command.GameClient, command.AccountId)
+	if err != nil {
+		return err
+	}
+
+	// 1. charge fee
+	if len(command.FeeCommands) > 0 {
+		for _, fee := range command.FeeCommands {
+			if fee.Value <= 0 {
+				continue
+			}
+			userTokenData := getUserERC20TokenData(userWallet.ERC20TokenData, fee.Token)
+			if userTokenData == nil {
+				return errors.New("insufficient balance for fee")
+			}
+
+			userTokenData.Balance -= fee.Value
+			userTokenData.TotalFee += fee.Value
+		}
+	}
+
+	switch command.AssetType {
+	case comm.ERC20AssetType:
+		return handleERC20Command(ctx, command)
+	case comm.ERC1155AssetType:
+		return handleERC1155Command(ctx, command)
+	default:
+		return errors.New("not support current asset type")
+	}
+}
+
+func handleERC20Command(ctx context.Context, command model.WalletCommand) error {
+	switch command.ActionType {
+	case comm.Deposit:
+		fmt.Println("erc20 deposit")
+	case comm.Withdraw:
+		fmt.Println("erc20 withdraw")
+	case comm.Income:
+		fmt.Println("erc20 income")
+	case comm.Spend:
+		fmt.Println("erc20 spend")
+	case comm.ChargeFee:
+		fmt.Println("erc20 charge fee")
+	default:
+		return errors.New("not support action type")
+	}
+	return nil
+}
+
+func handleERC1155Command(ctx context.Context, command model.WalletCommand) error {
+	switch command.ActionType {
+	case comm.Deposit:
+		fmt.Println("erc1155 deposit")
+	case comm.Withdraw:
+		fmt.Println("erc1155 withdraw")
+	case comm.Income:
+		fmt.Println("erc1155 income")
+	case comm.Spend:
+		fmt.Println("erc1155 spend")
+	case comm.ChargeFee:
+		fmt.Println("erc1155 charge fee")
+	default:
+		return errors.New("not support action type")
+	}
+	return nil
+}
+
+func getUserERC20TokenData(tokens []model.ERC20TokenData, token comm.ERC20Token) *model.ERC20TokenData {
+	for _, item := range tokens {
+		if item.Token == token.String() {
+			return &item
+		}
+	}
 	return nil
 }

@@ -6,6 +6,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"gorm.io/gorm"
+	"neco-wallet-center/internal/comm"
 )
 
 type Wallet struct {
@@ -34,15 +35,15 @@ func (wallet *Wallet) Scan(input interface{}) error {
 type ERC20TokenData struct {
 	gorm.Model    `swagger-ignore:"true"`
 	GameClient    int     `json:"game_client"`
-	AccountId     uint    `json:"account_id"`    //往家账户的ID
-	TokenType     string  `json:"token_type"`    //代币类型 NFISH, BUSD
-	TokenBalance  float64 `json:"token_balance"` // 玩家当前代币的余额
+	AccountId     uint    `json:"account_id"` //往家账户的ID
+	Token         string  `json:"token"`      //代币类型 NFISH, BUSD
+	Balance       float64 `json:"balance"`    // 玩家当前代币的余额
 	Decimal       uint    `json:"decimal"`
-	TokenIncome   float64 `json:"token_income"`   // 玩家通过玩游戏的总收入
-	TokenSpend    float64 `json:"token_spend"`    // 玩家通过玩游戏的总花费
-	TokenDeposit  float64 `json:"token_deposit"`  // 玩家通过质押的总额度
-	TokenWithdraw float64 `json:"token_withdraw"` // 玩家提取代币的总金额
-	TokenFee      float64 `json:"token_fee"`      // 玩家使用当前代币付的总手续费
+	TotalIncome   float64 `json:"total_income"`   // 玩家通过玩游戏的总收入
+	TotalSpend    float64 `json:"total_spend"`    // 玩家通过玩游戏的总花费
+	TotalDeposit  float64 `json:"total_deposit"`  // 玩家通过质押的总额度
+	TotalWithdraw float64 `json:"total_withdraw"` // 玩家提取代币的总金额
+	TotalFee      float64 `json:"total_fee"`      // 玩家使用当前代币付的总手续费
 }
 
 func (s ERC20TokenData) TableName() string {
@@ -65,9 +66,11 @@ type walletDA0 struct{}
 
 var WalletDAO = &walletDA0{}
 
-func (dao walletDA0) GetWallet(ctx context.Context, accountId string) (*Wallet, error) {
+func (dao walletDA0) GetWallet(ctx context.Context, gameClient comm.GameClient, accountId uint) (*Wallet, error) {
 	var wallet Wallet
-	if err := GetDb(ctx).Where("account_id = ?", accountId).First(&wallet).Error; err != nil {
+	if err := GetDb(ctx).
+		Where("game_client = ? AND account_id = ?", gameClient, accountId).
+		First(&wallet).Error; err != nil {
 		return nil, err
 	}
 	return &wallet, nil
