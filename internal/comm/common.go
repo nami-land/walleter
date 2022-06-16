@@ -1,5 +1,12 @@
 package comm
 
+type AssetType int
+
+const (
+	ERC20AssetType   = 0
+	ERC1155AssetType = 1
+)
+
 type ERC20Token int
 
 const (
@@ -50,6 +57,13 @@ type GameClient int
 const (
 	NecoFishing = 0
 )
+
+func (c GameClient) IsSupport() bool {
+	if c == NecoFishing {
+		return true
+	}
+	return false
+}
 
 type WalletLogStatus int
 

@@ -1,23 +1,40 @@
 package model
 
 import (
+	"database/sql/driver"
+	"encoding/json"
 	"fmt"
 	"gorm.io/gorm"
 )
 
+type WalletFeeItem struct {
+	TokenType string  `json:"token_type"`
+	Amount    float64 `json:"amount"`
+	Decimal   uint    `json:"decimal"`
+}
+
+func (item WalletFeeItem) Value() (driver.Value, error) {
+	b, err := json.Marshal(item)
+	return string(b), err
+}
+
+func (item *WalletFeeItem) Scan(input interface{}) error {
+	return json.Unmarshal(input.([]byte), item)
+}
+
 // ERC20WalletLog 钱包流水日志
 type ERC20WalletLog struct {
 	gorm.Model     `swagger-ignore:"true"`
-	GameClient     int     `json:"game_client"`
-	AccountId      uint    `json:"account_id"` //往家账户的ID
-	BusinessModule string  `json:"business_module" gorm:"type:varchar(64);not null;comment:'业务模块'"`
-	ActionType     string  `json:"action_type" gorm:"type:varchar(64);not null;comment:'操作类型'"`
-	TokenType      string  `json:"token_type;comment:'变更的代币数据'"`
-	Value          float64 `json:"value"` // 代币金额
-	Fee            float64 `json:"fee"`   // 手续费
-	Status         string  `json:"status" gorm:"type:varchar(64);not null;comment:处理状态"`
-	OriginalWallet Wallet  `json:"original_wallet" gorm:"type:json;not null;comment:'变更前的钱包数据'"`
-	SettledWallet  Wallet  `json:"settled_wallet" gorm:"type:json;not null;comment:'变更后的钱包数据'"`
+	GameClient     int             `json:"game_client"`
+	AccountId      uint            `json:"account_id"` //往家账户的ID
+	BusinessModule string          `json:"business_module" gorm:"type:varchar(64);not null;comment:'业务模块'"`
+	ActionType     string          `json:"action_type" gorm:"type:varchar(64);not null;comment:'操作类型'"`
+	TokenType      string          `json:"token_type;comment:'变更的代币数据'"`
+	Value          float64         `json:"value"`                         // 代币金额
+	Fee            []WalletFeeItem `json:"fee" gorm:"type:json;not null"` // 手续费
+	Status         string          `json:"status" gorm:"type:varchar(64);not null;comment:处理状态"`
+	OriginalWallet Wallet          `json:"original_wallet" gorm:"type:json;not null;comment:'变更前的钱包数据'"`
+	SettledWallet  Wallet          `json:"settled_wallet" gorm:"type:json;not null;comment:'变更后的钱包数据'"`
 }
 
 func (s ERC20WalletLog) TableName() string {
@@ -27,16 +44,16 @@ func (s ERC20WalletLog) TableName() string {
 // ERC1155WalletLog 钱包流水日志
 type ERC1155WalletLog struct {
 	gorm.Model     `swagger-ignore:"true"`
-	GameClient     int     `json:"game_client"`
-	AccountId      uint    `json:"account_id"` //往家账户的ID
-	BusinessModule string  `json:"business_module" gorm:"type:varchar(64);not null;comment:'业务模块'"`
-	ActionType     string  `json:"action_type" gorm:"type:varchar(64);not null;comment:'操作类型'"`
-	Ids            string  `json:"ids;comment:'变更的NFT IDs'"`
-	Values         float64 `json:"values"` // 变更的NFT数量
-	Fee            float64 `json:"fee"`    // 手续费
-	Status         string  `json:"status" gorm:"type:varchar(64);not null;comment:处理状态"`
-	OriginalWallet Wallet  `json:"original_wallet" gorm:"type:json;not null;comment:'变更前的钱包数据'"`
-	SettledWallet  Wallet  `json:"settled_wallet" gorm:"type:json;not null;comment:'变更后的钱包数据'"`
+	GameClient     int             `json:"game_client"`
+	AccountId      uint            `json:"account_id"` //往家账户的ID
+	BusinessModule string          `json:"business_module" gorm:"type:varchar(64);not null;comment:'业务模块'"`
+	ActionType     string          `json:"action_type" gorm:"type:varchar(64);not null;comment:'操作类型'"`
+	Ids            string          `json:"ids;comment:'变更的NFT IDs'"`
+	Values         string          `json:"values"`                        // 变更的NFT数量
+	Fee            []WalletFeeItem `json:"fee" gorm:"type:json;not null"` // 手续费
+	Status         string          `json:"status" gorm:"type:varchar(64);not null;comment:处理状态"`
+	OriginalWallet Wallet          `json:"original_wallet" gorm:"type:json;not null;comment:'变更前的钱包数据'"`
+	SettledWallet  Wallet          `json:"settled_wallet" gorm:"type:json;not null;comment:'变更后的钱包数据'"`
 }
 
 func (s ERC1155WalletLog) TableName() string {
