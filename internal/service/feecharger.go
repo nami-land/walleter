@@ -3,6 +3,7 @@ package service
 import (
 	"errors"
 	"gorm.io/gorm"
+	"neco-wallet-center/internal/comm"
 	"neco-wallet-center/internal/model"
 	"neco-wallet-center/internal/model/initial"
 )
@@ -49,4 +50,13 @@ func (receiver *feeChargerService) ChargeFee(
 		return userWallet, err
 	}
 	return userWallet, nil
+}
+
+func getUserERC20TokenWallet(tokens []model.ERC20TokenWallet, token comm.ERC20Token) (int, model.ERC20TokenWallet) {
+	for index, item := range tokens {
+		if item.Token == token.String() {
+			return index, item
+		}
+	}
+	return -1, model.ERC20TokenWallet{}
 }

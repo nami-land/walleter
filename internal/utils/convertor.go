@@ -18,15 +18,15 @@ func ConvertUintArrayToString(arr []uint) string {
 	return result
 }
 
-func ConvertStringToIntArray(str string) []int32 {
-	var result []int32
+func ConvertStringToUIntArray(str string) []uint {
+	var result []uint
 	strArray := strings.Split(str, ",")
 	for _, item := range strArray {
 		intItem, err := strconv.ParseInt(item, 10, 32)
 		if err != nil {
 			continue
 		}
-		result = append(result, int32(intItem))
+		result = append(result, uint(intItem))
 	}
 	return result
 }
@@ -37,4 +37,13 @@ func ConvertIntArrayToBigIntArray(arr []int32) []*big.Int {
 		result = append(result, big.NewInt(int64(item)))
 	}
 	return result
+}
+
+func GetIndexFromUIntArray(array []uint, value uint) int {
+	for index, num := range array {
+		if num == value {
+			return index
+		}
+	}
+	return -1
 }

@@ -3,11 +3,11 @@ package service
 import (
 	"context"
 	"errors"
-	"fmt"
 	"gorm.io/gorm"
 	"neco-wallet-center/internal/comm"
 	"neco-wallet-center/internal/model"
 	"neco-wallet-center/internal/pkg"
+	"neco-wallet-center/internal/utils"
 )
 
 type walletCenterService struct{}
@@ -175,19 +175,83 @@ func handleERC20Command(ctx context.Context, command model.WalletCommand) error 
 }
 
 func handleERC1155Command(ctx context.Context, command model.WalletCommand) error {
-	switch command.ActionType {
-	case comm.Deposit:
-		fmt.Println("erc1155 deposit")
-	case comm.Withdraw:
-		fmt.Println("erc1155 withdraw")
-	case comm.Income:
-		fmt.Println("erc1155 income")
-	case comm.Spend:
-		fmt.Println("erc1155 spend")
-	case comm.ChargeFee:
-		fmt.Println("erc1155 charge fee")
-	default:
-		return errors.New("not support action type")
+	err := model.GetDb(ctx).Transaction(func(tx *gorm.DB) error {
+		logService := NewWalletLogService()
+		userWallet, err := model.WalletDAO.GetWallet(model.GetDb(ctx), command.GameClient, command.AccountId)
+		if err != nil {
+			return err
+		}
+
+		// 1.插入一条log信息
+		log, err := logService.InsertNewERC1155WalletLog(tx, command, userWallet)
+		if err != nil {
+			return err
+		}
+
+		// 2. 收取手续费
+		userWallet, err = NewFeeChargerService().ChargeFee(tx, command, userWallet)
+		if err != nil {
+			_, err = logService.UpdateERC1155WalletLog(tx, log, comm.Failed, userWallet)
+			return err
+		}
+
+		// 3. 对用户资产进行变更
+		ids := utils.ConvertStringToUIntArray(userWallet.ERC1155TokenData.Ids)
+		values := utils.ConvertStringToUIntArray(userWallet.ERC1155TokenData.Values)
+		switch command.ActionType {
+		case comm.Deposit, comm.Income:
+			for index, id := range command.ERC1155Command.Ids {
+				value := command.ERC1155Command.Values[index]
+				i := utils.GetIndexFromUIntArray(ids, id)
+				if i == -1 {
+					ids = append(ids, id)
+					values = append(values, value)
+				} else {
+					values[i] = values[i] + value
+				}
+
+				userWallet.ERC1155TokenData.Ids = utils.ConvertUintArrayToString(ids)
+				userWallet.ERC1155TokenData.Values = utils.ConvertUintArrayToString(values)
+			}
+			break
+		case comm.Withdraw, comm.Spend:
+			for index, id := range command.ERC1155Command.Ids {
+				value := command.ERC1155Command.Values[index]
+				i := utils.GetIndexFromUIntArray(ids, id)
+				if i == -1 {
+					return errors.New("insufficient nft balance")
+				} else {
+					if values[i] < value {
+						return errors.New("insufficient nft balance")
+					}
+					values[i] = values[i] - value
+				}
+
+				userWallet.ERC1155TokenData.Ids = utils.ConvertUintArrayToString(ids)
+				userWallet.ERC1155TokenData.Values = utils.ConvertUintArrayToString(values)
+			}
+			break
+		default:
+			return errors.New("not support action type")
+		}
+
+		// 4. 更新用户资产
+		err = model.WalletDAO.UpdateWallet(tx, userWallet)
+		if err != nil {
+			_, err = logService.UpdateERC1155WalletLog(tx, log, comm.Failed, userWallet)
+			return err
+		}
+
+		// 5. 更新log信息
+		_, err = NewWalletLogService().UpdateERC1155WalletLog(tx, log, comm.Done, userWallet)
+		if err != nil {
+			return err
+		}
+		return nil
+	})
+
+	if err != nil {
+		return err
 	}
 	return nil
 }
