@@ -3,74 +3,54 @@ syntax = "proto3";
 option go_package = "./pb";
 
 service NecoWalletCenter {
-  rpc UpdateUserERC20Wallet (UpdateUserERC20WalletRequest) returns (UpdateUserERC20WalletResponse) {}
-  rpc UpdateUserERC1155Wallet (UpdateUserERC1155WalletRequest) returns (UpdateUserERC1155WalletResponse) {}
-  rpc GetUserERC20Wallet (GetUserERC20WalletRequest) returns (GetUserERC20WalletResponse) {}
-  rpc GetUserERC1155Wallet (GetUserERC1155WalletRequest) returns (GetUserERC1155WalletResponse) {}
+  rpc InitUserWallet (InitUserWalletRequest) returns (UserWallet) {}
+  rpc UpdateUserWallet (UpdateUserWalletRequest) returns (UserWallet) {}
+  rpc GetUserWallet (GetUserWalletRequest) returns (UserWallet) {}
 }
 
-message UpdateUserERC20WalletRequest {
+message InitUserWalletRequest {
   string AccountId = 1;
-  string PublicAddress = 2;
-  GameClient GameClient = 3;
-  string BusinessModule = 4;
+  GameClient GameClient = 2;
+  WalletActionType ActionType = 3;
+}
+
+message UpdateUserWalletRequest {
+  string AccountId = 1;
+  GameClient GameClient = 2;
+  string BusinessModule = 3;
+  AssetType AssetType = 4;
   WalletActionType ActionType = 5;
-  ERC20Token Token = 6;
-  float Value = 7;
+  repeated ERC20TokenData ERC20TokenData = 6;
+  ERC1155TokenData ERC1155TokenData = 7;
   ActionStatus Status = 8;
 }
 
-message UpdateUserERC20WalletResponse {
-  ActionStatus ActionStatus = 1;
-  GetUserERC20WalletResponse ERC20Wallet = 2;
-}
-
-message UpdateUserERC1155WalletRequest {
-  string AccountId = 1;
-  string PublicAddress = 2;
-  GameClient GameClient = 3;
-  string BusinessModule = 4;
-  WalletActionType ActionType = 5;
-  repeated int64 Ids = 6;
-  repeated int64 Values = 7;
-  ActionStatus Status = 8;
-}
-
-message UpdateUserERC1155WalletResponse {
-  ActionStatus ActionStatus = 1;
-  GetUserERC1155WalletResponse ERC1155Wallet = 2;
-}
-
-message GetUserERC20WalletRequest {
+message GetUserWalletRequest {
   string AccountId = 1;
   string PublicAddress = 2;
   GameClient GameClient = 3;
 }
 
-message GetUserERC20WalletResponse {
-  string AccountId = 1;
-  string PublicAddress = 2;
-  GameClient GameClient = 3;
-  repeated ERC20TokenData TokenData = 4;
+message UserWallet {
+  uint64 Id = 1;
+  GameClient GameClient = 2;
+  uint64 AccountId = 3;
+  string PublicAddress = 4;
+  repeated ERC20TokenData ERC20Tokens = 5;
+  ERC1155TokenData ERC1155Token = 6;
 }
 
-message GetUserERC1155WalletRequest {
-  string AccountId = 1;
-  string PublicAddress = 2;
-  GameClient GameClient = 3;
-}
-
-message GetUserERC1155WalletResponse {
-  string AccountId = 1;
-  string PublicAddress = 2;
-  GameClient GameClient = 3;
-  repeated int64 Ids = 4;
-  repeated int64 Amounts = 5;
+message ERC1155TokenData {
+  uint64 Id = 1;
+  repeated uint32 Ids = 2;
+  repeated uint32 Values = 3;
 }
 
 message ERC20TokenData {
-  ERC20Token Token = 1;
-  string Balance = 2;
+  uint64 Id = 1;
+  ERC20Token Token = 2;
+  float Balance = 3;
+  int64 Decimal = 4;
 }
 
 enum GameClient {
@@ -94,5 +74,11 @@ enum ActionStatus {
   Pending = 0;
   Succeed = 1;
   Failed = 2;
+}
+
+enum AssetType {
+  ERC20AssetType   = 0;
+  ERC1155AssetType = 1;
+  Other            = 2;
 }
 
