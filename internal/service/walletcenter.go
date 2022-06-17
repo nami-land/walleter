@@ -7,6 +7,7 @@ import (
 	"gorm.io/gorm"
 	"neco-wallet-center/internal/comm"
 	"neco-wallet-center/internal/model"
+	"neco-wallet-center/internal/model/initial"
 	"neco-wallet-center/internal/pkg"
 )
 
@@ -76,7 +77,13 @@ func initWallet(ctx context.Context, command model.WalletCommand) error {
 	return err
 }
 
+// TODO 需要将所有ctx的传递改为db的传递
 func updateWallet(ctx context.Context, command model.WalletCommand) error {
+	feeChargerWallet, err := model.WalletDAO.GetWallet(
+		ctx, command.GameClient, initial.GetFeeChargerAccount(command.GameClient).AccountId)
+	if err != nil {
+		return err
+	}
 	userWallet, err := model.WalletDAO.GetWallet(ctx, command.GameClient, command.AccountId)
 	if err != nil {
 		return err
