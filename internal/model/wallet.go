@@ -1,7 +1,6 @@
 package model
 
 import (
-	"context"
 	"database/sql/driver"
 	"encoding/json"
 	"fmt"
@@ -66,25 +65,25 @@ type walletDA0 struct{}
 
 var WalletDAO = &walletDA0{}
 
-func (dao walletDA0) GetWallet(ctx context.Context, gameClient comm.GameClient, accountId uint) (*Wallet, error) {
+func (dao walletDA0) GetWallet(db *gorm.DB, gameClient comm.GameClient, accountId uint) (Wallet, error) {
 	var wallet Wallet
-	if err := GetDb(ctx).
+	if err := db.
 		Where("game_client = ? AND account_id = ?", gameClient, accountId).
 		First(&wallet).Error; err != nil {
-		return nil, err
+		return Wallet{}, err
 	}
-	return &wallet, nil
+	return wallet, nil
 }
 
-func (dao walletDA0) UpdateWallet(ctx context.Context, newWallet Wallet) error {
-	if err := GetDb(ctx).Save(&newWallet).Error; err != nil {
+func (dao walletDA0) UpdateWallet(db *gorm.DB, newWallet Wallet) error {
+	if err := db.Save(&newWallet).Error; err != nil {
 		return err
 	}
 	return nil
 }
 
-func (dao walletDA0) CreateWallet(ctx context.Context, wallet Wallet) error {
-	if err := GetDb(ctx).Create(&wallet).Error; err != nil {
+func (dao walletDA0) CreateWallet(db *gorm.DB, wallet Wallet) error {
+	if err := db.Create(&wallet).Error; err != nil {
 		return err
 	}
 	return nil

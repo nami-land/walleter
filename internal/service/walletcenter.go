@@ -7,7 +7,6 @@ import (
 	"gorm.io/gorm"
 	"neco-wallet-center/internal/comm"
 	"neco-wallet-center/internal/model"
-	"neco-wallet-center/internal/model/initial"
 	"neco-wallet-center/internal/pkg"
 )
 
@@ -77,34 +76,7 @@ func initWallet(ctx context.Context, command model.WalletCommand) error {
 	return err
 }
 
-// TODO 需要将所有ctx的传递改为db的传递
 func updateWallet(ctx context.Context, command model.WalletCommand) error {
-	feeChargerWallet, err := model.WalletDAO.GetWallet(
-		ctx, command.GameClient, initial.GetFeeChargerAccount(command.GameClient).AccountId)
-	if err != nil {
-		return err
-	}
-	userWallet, err := model.WalletDAO.GetWallet(ctx, command.GameClient, command.AccountId)
-	if err != nil {
-		return err
-	}
-
-	// 1. charge fee
-	if len(command.FeeCommands) > 0 {
-		for _, fee := range command.FeeCommands {
-			if fee.Value <= 0 {
-				continue
-			}
-			userTokenData := getUserERC20TokenData(userWallet.ERC20TokenData, fee.Token)
-			if userTokenData == nil {
-				return errors.New("insufficient balance for fee")
-			}
-
-			userTokenData.Balance -= fee.Value
-			userTokenData.TotalFee += fee.Value
-		}
-	}
-
 	switch command.AssetType {
 	case comm.ERC20AssetType:
 		return handleERC20Command(ctx, command)
@@ -147,15 +119,6 @@ func handleERC1155Command(ctx context.Context, command model.WalletCommand) erro
 		fmt.Println("erc1155 charge fee")
 	default:
 		return errors.New("not support action type")
-	}
-	return nil
-}
-
-func getUserERC20TokenData(tokens []model.ERC20TokenWallet, token comm.ERC20Token) *model.ERC20TokenWallet {
-	for _, item := range tokens {
-		if item.Token == token.String() {
-			return &item
-		}
 	}
 	return nil
 }
