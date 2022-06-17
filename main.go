@@ -26,9 +26,11 @@ func main() {
 	}
 	migration(db)
 
-	err = service.NewWalletCenterService().HandleWalletCommand(context.Background(), initial.InitNecoFishingFeeChargerAccountCommand)
-	if err != nil {
-		fmt.Printf("err: %v \n", err)
+	for _, command := range initial.InitializedCommands {
+		err = service.NewWalletCenterService().HandleWalletCommand(context.Background(), command)
+		if err != nil {
+			fmt.Printf("err: %v \n", err)
+		}
 	}
 	//l, err := net.Listen("tcp", ":8081")
 	//if err != nil {
