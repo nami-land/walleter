@@ -55,7 +55,7 @@ func initWallet(ctx context.Context, command model.WalletCommand) error {
 			ERC1155TokenData: erc1155Data,
 			CheckSign:        "",
 		}
-		err = model.WalletDAO.CreateWallet(ctx, wallet)
+		err = model.WalletDAO.CreateWallet(tx1, wallet)
 		if err != nil {
 			return err
 		}
@@ -88,19 +88,88 @@ func updateWallet(ctx context.Context, command model.WalletCommand) error {
 }
 
 func handleERC20Command(ctx context.Context, command model.WalletCommand) error {
-	switch command.ActionType {
-	case comm.Deposit:
-		fmt.Println("erc20 deposit")
-	case comm.Withdraw:
-		fmt.Println("erc20 withdraw")
-	case comm.Income:
-		fmt.Println("erc20 income")
-	case comm.Spend:
-		fmt.Println("erc20 spend")
-	case comm.ChargeFee:
-		fmt.Println("erc20 charge fee")
-	default:
-		return errors.New("not support action type")
+	err := model.GetDb(ctx).Transaction(func(tx *gorm.DB) error {
+		logService := NewWalletLogService()
+		userWallet, err := model.WalletDAO.GetWallet(model.GetDb(ctx), command.GameClient, command.AccountId)
+		if err != nil {
+			return err
+		}
+
+		// 1.插入一条log信息
+		log, err := logService.InsertNewERC20WalletLog(tx, command, userWallet)
+		if err != nil {
+			return err
+		}
+
+		// 2. 收取手续费
+		userWallet, err = NewFeeChargerService().ChargeFee(tx, command, userWallet)
+		if err != nil {
+			_, err = logService.UpdateERC20WalletLog(tx, log, comm.Failed, userWallet)
+			return err
+		}
+
+		// 3. 对用户资产进行变更
+		switch command.ActionType {
+		case comm.Deposit:
+			for _, token := range command.ERC20Commands {
+				index, userERC20TokenWallet := getUserERC20TokenWallet(userWallet.ERC20TokenData, token.Token)
+				userERC20TokenWallet.Balance += token.Value
+				userERC20TokenWallet.TotalDeposit += token.Value
+				userWallet.ERC20TokenData[index] = userERC20TokenWallet
+			}
+			break
+		case comm.Withdraw:
+			for _, token := range command.ERC20Commands {
+				index, userERC20TokenWallet := getUserERC20TokenWallet(userWallet.ERC20TokenData, token.Token)
+				userERC20TokenWallet.Balance -= token.Value
+				userERC20TokenWallet.TotalWithdraw += token.Value
+				userWallet.ERC20TokenData[index] = userERC20TokenWallet
+			}
+			break
+		case comm.Income:
+			for _, token := range command.ERC20Commands {
+				index, userERC20TokenWallet := getUserERC20TokenWallet(userWallet.ERC20TokenData, token.Token)
+				userERC20TokenWallet.Balance += token.Value
+				userERC20TokenWallet.TotalIncome += token.Value
+				userWallet.ERC20TokenData[index] = userERC20TokenWallet
+			}
+			break
+		case comm.Spend:
+			for _, token := range command.ERC20Commands {
+				index, userERC20TokenWallet := getUserERC20TokenWallet(userWallet.ERC20TokenData, token.Token)
+				userERC20TokenWallet.Balance -= token.Value
+				userERC20TokenWallet.TotalSpend += token.Value
+				userWallet.ERC20TokenData[index] = userERC20TokenWallet
+			}
+			break
+		case comm.ChargeFee:
+			for _, token := range command.ERC20Commands {
+				index, userERC20TokenWallet := getUserERC20TokenWallet(userWallet.ERC20TokenData, token.Token)
+				userERC20TokenWallet.Balance -= token.Value
+				userERC20TokenWallet.TotalFee += token.Value
+				userWallet.ERC20TokenData[index] = userERC20TokenWallet
+			}
+			break
+		default:
+			return errors.New("not support action type")
+		}
+
+		// 4. 更新用户资产
+		err = model.WalletDAO.UpdateWallet(tx, userWallet)
+		if err != nil {
+			_, err = logService.UpdateERC20WalletLog(tx, log, comm.Failed, userWallet)
+			return err
+		}
+
+		// 5. 更新log信息
+		_, err = NewWalletLogService().UpdateERC20WalletLog(tx, log, comm.Done, userWallet)
+		if err != nil {
+			return err
+		}
+		return nil
+	})
+	if err != nil {
+		return err
 	}
 	return nil
 }
