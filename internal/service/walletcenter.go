@@ -7,15 +7,16 @@ import (
 	"gorm.io/gorm"
 	"neco-wallet-center/internal/comm"
 	"neco-wallet-center/internal/model"
+	"neco-wallet-center/internal/pkg"
 )
 
-type walletCenterService struct{}
+type WalletCenterService struct{}
 
-func NewWalletCenterService() *walletCenterService {
-	return &walletCenterService{}
+func NewWalletCenterService() *WalletCenterService {
+	return &WalletCenterService{}
 }
 
-func (s walletCenterService) HandleWalletCommand(ctx context.Context, command model.WalletCommand) error {
+func (s WalletCenterService) HandleWalletCommand(ctx context.Context, command model.WalletCommand) error {
 	if !command.GameClient.IsSupport() {
 		return errors.New("game client is invalid")
 	}
@@ -31,28 +32,20 @@ func (s walletCenterService) HandleWalletCommand(ctx context.Context, command mo
 func initWallet(ctx context.Context, command model.WalletCommand) error {
 	err := model.GetDb(ctx).Transaction(func(tx1 *gorm.DB) error {
 		// 1. Insert change logs, including ERC20 logs and ERC1155 Log.
-		erc20WalletLogDataArray := generateERC20WalletLogArray(command, model.Wallet{})
-		for index, logData := range erc20WalletLogDataArray {
-			newLog, err := model.ERC20WalletLogDAO.InsertERC20WalletLog(tx1, &logData)
-			if err != nil {
-				return err
-			}
-			erc20WalletLogDataArray[index] = *newLog
+		walletLogService := NewWalletLogService()
+		erc20WalletLog, err := walletLogService.InsertNewERC20WalletLog(tx1, command, model.Wallet{})
+		if err != nil {
+			return err
 		}
 
-		erc115WalletLog := generateERC1155WalletLog(command, model.Wallet{})
-		nftWalletLog, err := model.ERC1155WalletLogDAO.InsertERC1155WalletLog(tx1, &erc115WalletLog)
+		erc115WalletLog, err := walletLogService.InsertNewERC1155WalletLog(tx1, command, model.Wallet{})
 		if err != nil {
 			return err
 		}
 
 		// 2. initialize user's wallet data.
-		erc20DataArray := generateERC20DataArray(command)
-		erc1155Data := model.ERC1155TokenData{
-			Model:      gorm.Model{},
-			GameClient: int(command.GameClient),
-			AccountId:  command.AccountId,
-		}
+		erc20DataArray := pkg.ParseCommandToERC20WalletArray(command)
+		erc1155Data := pkg.ParseCommandToERC1155Wallet(command)
 		wallet := model.Wallet{
 			Model:            gorm.Model{},
 			GameClient:       int(command.GameClient),
@@ -68,18 +61,12 @@ func initWallet(ctx context.Context, command model.WalletCommand) error {
 		}
 
 		// 3. change log statuses
-		for _, logData := range erc20WalletLogDataArray {
-			logData.SettledWallet = wallet
-			logData.Status = comm.Done.String()
-			_, err = model.ERC20WalletLogDAO.UpdateERC20WalletLogStatus(tx1, &logData)
-			if err != nil {
-				return err
-			}
+		_, err = walletLogService.UpdateERC20WalletLog(tx1, erc20WalletLog, comm.Done)
+		if err != nil {
+			return err
 		}
 
-		nftWalletLog.SettledWallet = wallet
-		nftWalletLog.Status = comm.Done.String()
-		_, err = model.ERC1155WalletLogDAO.UpdateERC1155WalletLogStatus(tx1, nftWalletLog)
+		_, err = walletLogService.UpdateERC1155WalletLog(tx1, erc115WalletLog, comm.Done)
 		if err != nil {
 			return err
 		}
@@ -157,7 +144,7 @@ func handleERC1155Command(ctx context.Context, command model.WalletCommand) erro
 	return nil
 }
 
-func getUserERC20TokenData(tokens []model.ERC20TokenData, token comm.ERC20Token) *model.ERC20TokenData {
+func getUserERC20TokenData(tokens []model.ERC20TokenWallet, token comm.ERC20Token) *model.ERC20TokenWallet {
 	for _, item := range tokens {
 		if item.Token == token.String() {
 			return &item

@@ -11,12 +11,12 @@ import (
 
 type Wallet struct {
 	gorm.Model       `swagger-ignore:"true"`
-	GameClient       int              `json:"game_client"`
-	AccountId        uint             `json:"account_id" gorm:"unique; not null"` // 玩家账户ID
-	PublicAddress    string           `json:"address" gorm:"unique;not null"`     // 玩家的钱包地址
-	ERC20TokenData   []ERC20TokenData `json:"erc_20_token_data" gorm:"foreignKey:AccountId;references:AccountId"`
-	ERC1155TokenData ERC1155TokenData `json:"erc_1155_token_data" gorm:"foreignKey:AccountId;references:AccountId"`
-	CheckSign        string           `json:"check_sign" gorm:"type:varchar(128);not null;comment:'安全签名'"`
+	GameClient       int                `json:"game_client"`
+	AccountId        uint               `json:"account_id" gorm:"unique; not null"` // 玩家账户ID
+	PublicAddress    string             `json:"address" gorm:"unique;not null"`     // 玩家的钱包地址
+	ERC20TokenData   []ERC20TokenWallet `json:"erc_20_token_data" gorm:"foreignKey:AccountId;references:AccountId"`
+	ERC1155TokenData ERC1155TokenWallet `json:"erc_1155_token_data" gorm:"foreignKey:AccountId;references:AccountId"`
+	CheckSign        string             `json:"check_sign" gorm:"type:varchar(128);not null;comment:'安全签名'"`
 }
 
 func (wallet Wallet) TableName() string {
@@ -32,7 +32,7 @@ func (wallet *Wallet) Scan(input interface{}) error {
 	return json.Unmarshal(input.([]byte), wallet)
 }
 
-type ERC20TokenData struct {
+type ERC20TokenWallet struct {
 	gorm.Model    `swagger-ignore:"true"`
 	GameClient    int     `json:"game_client"`
 	AccountId     uint    `json:"account_id"` //往家账户的ID
@@ -46,11 +46,11 @@ type ERC20TokenData struct {
 	TotalFee      float64 `json:"total_fee"`      // 玩家使用当前代币付的总手续费
 }
 
-func (s ERC20TokenData) TableName() string {
+func (s ERC20TokenWallet) TableName() string {
 	return fmt.Sprintf("t_erc20_token_data_%d", s.GameClient)
 }
 
-type ERC1155TokenData struct {
+type ERC1155TokenWallet struct {
 	gorm.Model `swagger-ignore:"true"`
 	GameClient int    `json:"game_client"`
 	AccountId  uint   `json:"account_id"` //往家账户的ID
@@ -58,7 +58,7 @@ type ERC1155TokenData struct {
 	Values     string `json:"values"`     // 玩家拥有的NFT的数量
 }
 
-func (s ERC1155TokenData) TableName() string {
+func (s ERC1155TokenWallet) TableName() string {
 	return fmt.Sprintf("t_erc1155_token_data_%d", s.GameClient)
 }
 

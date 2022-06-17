@@ -41,8 +41,8 @@ func main() {
 }
 
 func migration(db *gorm.DB) {
-	_ = db.Table("t_erc20_token_data_0").AutoMigrate(model.ERC20TokenData{})
-	_ = db.Table("t_erc1155_token_data_0").AutoMigrate(model.ERC1155TokenData{})
+	_ = db.Table("t_erc20_token_data_0").AutoMigrate(model.ERC20TokenWallet{})
+	_ = db.Table("t_erc1155_token_data_0").AutoMigrate(model.ERC1155TokenWallet{})
 	_ = db.Table("t_wallet_0").AutoMigrate(model.Wallet{})
 	_ = db.Table("t_erc20_wallet_log_0").AutoMigrate(model.ERC20WalletLog{})
 	_ = db.Table("t_erc1155_wallet_log_0").AutoMigrate(model.ERC1155WalletLog{})

@@ -224,7 +224,7 @@ type UpdateUserERC20WalletRequest struct {
 	BusinessModule string           `protobuf:"bytes,4,opt,name=BusinessModule,proto3" json:"BusinessModule,omitempty"`
 	ActionType     WalletActionType `protobuf:"varint,5,opt,name=ActionType,proto3,enum=WalletActionType" json:"ActionType,omitempty"`
 	Token          ERC20Token       `protobuf:"varint,6,opt,name=Token,proto3,enum=ERC20Token" json:"Token,omitempty"`
-	Value          float32          `protobuf:"fixed32,7,opt,name=Value,proto3" json:"Value,omitempty"`
+	Value          float32          `protobuf:"fixed32,7,opt,name=Values,proto3" json:"Values,omitempty"`
 	Status         ActionStatus     `protobuf:"varint,8,opt,name=Status,proto3,enum=ActionStatus" json:"Status,omitempty"`
 }
 
