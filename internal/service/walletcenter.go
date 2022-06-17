@@ -55,12 +55,20 @@ func initWallet(ctx context.Context, command model.WalletCommand) error {
 			ERC1155TokenData: erc1155Data,
 			CheckSign:        "",
 		}
+
+		// 3. generator a new check sign
+		newCheckSign, err := NewWalletValidator().GenerateNewSignHash(wallet)
+		if err != nil {
+			return err
+		}
+		wallet.CheckSign = newCheckSign
+
 		err = model.WalletDAO.CreateWallet(tx1, wallet)
 		if err != nil {
 			return err
 		}
 
-		// 3. change log statuses
+		// 4. change log statuses
 		_, err = walletLogService.UpdateERC20WalletLog(tx1, erc20WalletLog, comm.Done, wallet)
 		if err != nil {
 			return err
@@ -90,25 +98,33 @@ func updateWallet(ctx context.Context, command model.WalletCommand) error {
 func handleERC20Command(ctx context.Context, command model.WalletCommand) error {
 	err := model.GetDb(ctx).Transaction(func(tx *gorm.DB) error {
 		logService := NewWalletLogService()
+		validator := NewWalletValidator()
+
 		userWallet, err := model.WalletDAO.GetWallet(model.GetDb(ctx), command.GameClient, command.AccountId)
 		if err != nil {
 			return err
 		}
 
-		// 1.插入一条log信息
+		// 1. 验证用户当前钱包状态是否正常
+		result, err := validator.ValidateWallet(userWallet)
+		if err != nil || result == false {
+			return err
+		}
+
+		// 2.插入一条log信息
 		log, err := logService.InsertNewERC20WalletLog(tx, command, userWallet)
 		if err != nil {
 			return err
 		}
 
-		// 2. 收取手续费
+		// 3. 是否收取手续费
 		userWallet, err = NewFeeChargerService().ChargeFee(tx, command, userWallet)
 		if err != nil {
 			_, err = logService.UpdateERC20WalletLog(tx, log, comm.Failed, userWallet)
 			return err
 		}
 
-		// 3. 对用户资产进行变更
+		// 4. 对用户资产进行变更
 		switch command.ActionType {
 		case comm.Deposit:
 			for _, token := range command.ERC20Commands {
@@ -154,14 +170,21 @@ func handleERC20Command(ctx context.Context, command model.WalletCommand) error 
 			return errors.New("not support action type")
 		}
 
-		// 4. 更新用户资产
+		// 6. 生成新的验证信息
+		newCheckSign, err := validator.GenerateNewSignHash(userWallet)
+		if err != nil {
+			return err
+		}
+		userWallet.CheckSign = newCheckSign
+
+		// 7. 更新用户资产
 		err = model.WalletDAO.UpdateWallet(tx, userWallet)
 		if err != nil {
 			_, err = logService.UpdateERC20WalletLog(tx, log, comm.Failed, userWallet)
 			return err
 		}
 
-		// 5. 更新log信息
+		// 8. 更新log信息
 		_, err = NewWalletLogService().UpdateERC20WalletLog(tx, log, comm.Done, userWallet)
 		if err != nil {
 			return err
@@ -177,25 +200,33 @@ func handleERC20Command(ctx context.Context, command model.WalletCommand) error 
 func handleERC1155Command(ctx context.Context, command model.WalletCommand) error {
 	err := model.GetDb(ctx).Transaction(func(tx *gorm.DB) error {
 		logService := NewWalletLogService()
+		validator := NewWalletValidator()
+
 		userWallet, err := model.WalletDAO.GetWallet(model.GetDb(ctx), command.GameClient, command.AccountId)
 		if err != nil {
 			return err
 		}
 
-		// 1.插入一条log信息
+		// 1. 验证用户当前钱包状态是否正常
+		result, err := validator.ValidateWallet(userWallet)
+		if err != nil || result == false {
+			return err
+		}
+
+		// 2.插入一条log信息
 		log, err := logService.InsertNewERC1155WalletLog(tx, command, userWallet)
 		if err != nil {
 			return err
 		}
 
-		// 2. 收取手续费
+		// 3. 是否收取手续费
 		userWallet, err = NewFeeChargerService().ChargeFee(tx, command, userWallet)
 		if err != nil {
 			_, err = logService.UpdateERC1155WalletLog(tx, log, comm.Failed, userWallet)
 			return err
 		}
 
-		// 3. 对用户资产进行变更
+		// 5. 对用户资产进行变更
 		ids := utils.ConvertStringToUIntArray(userWallet.ERC1155TokenData.Ids)
 		values := utils.ConvertStringToUIntArray(userWallet.ERC1155TokenData.Values)
 		switch command.ActionType {
@@ -235,14 +266,21 @@ func handleERC1155Command(ctx context.Context, command model.WalletCommand) erro
 			return errors.New("not support action type")
 		}
 
-		// 4. 更新用户资产
+		// 6. 生成新的验证信息
+		newCheckSign, err := validator.GenerateNewSignHash(userWallet)
+		if err != nil {
+			return err
+		}
+		userWallet.CheckSign = newCheckSign
+
+		// 7. 更新用户资产
 		err = model.WalletDAO.UpdateWallet(tx, userWallet)
 		if err != nil {
 			_, err = logService.UpdateERC1155WalletLog(tx, log, comm.Failed, userWallet)
 			return err
 		}
 
-		// 5. 更新log信息
+		// 8. 更新log信息
 		_, err = NewWalletLogService().UpdateERC1155WalletLog(tx, log, comm.Done, userWallet)
 		if err != nil {
 			return err
