@@ -10,13 +10,13 @@ import (
 	"neco-wallet-center/internal/pkg"
 )
 
-type WalletCenterService struct{}
+type walletCenterService struct{}
 
-func NewWalletCenterService() *WalletCenterService {
-	return &WalletCenterService{}
+func NewWalletCenterService() *walletCenterService {
+	return &walletCenterService{}
 }
 
-func (s WalletCenterService) HandleWalletCommand(ctx context.Context, command model.WalletCommand) error {
+func (s *walletCenterService) HandleWalletCommand(ctx context.Context, command model.WalletCommand) error {
 	if !command.GameClient.IsSupport() {
 		return errors.New("game client is invalid")
 	}
@@ -61,12 +61,12 @@ func initWallet(ctx context.Context, command model.WalletCommand) error {
 		}
 
 		// 3. change log statuses
-		_, err = walletLogService.UpdateERC20WalletLog(tx1, erc20WalletLog, comm.Done)
+		_, err = walletLogService.UpdateERC20WalletLog(tx1, erc20WalletLog, comm.Done, wallet)
 		if err != nil {
 			return err
 		}
 
-		_, err = walletLogService.UpdateERC1155WalletLog(tx1, erc115WalletLog, comm.Done)
+		_, err = walletLogService.UpdateERC1155WalletLog(tx1, erc115WalletLog, comm.Done, wallet)
 		if err != nil {
 			return err
 		}

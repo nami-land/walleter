@@ -14,5 +14,5 @@ func GetFeeChargerAccount(gameClient GameClient) OfficialAccount {
 	if gameClient == NecoFishing {
 		return necoFishingFeeChargerAccount
 	}
-	return OfficialAccount{}
+	return necoFishingFeeChargerAccount
 }

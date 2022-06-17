@@ -7,6 +7,19 @@ import (
 	"gorm.io/gorm"
 )
 
+type ERC20TokenCollection struct {
+	Items []ERC20TokenData `json:"items"`
+}
+
+func (item ERC20TokenCollection) Value() (driver.Value, error) {
+	b, err := json.Marshal(item)
+	return string(b), err
+}
+
+func (item *ERC20TokenCollection) Scan(input interface{}) error {
+	return json.Unmarshal(input.([]byte), item)
+}
+
 type ERC20TokenData struct {
 	TokenType string  `json:"token_type"`
 	Amount    float64 `json:"amount"`
@@ -25,15 +38,15 @@ func (item *ERC20TokenData) Scan(input interface{}) error {
 // ERC20WalletLog 钱包流水日志
 type ERC20WalletLog struct {
 	gorm.Model     `swagger-ignore:"true"`
-	GameClient     int              `json:"game_client"`
-	AccountId      uint             `json:"account_id"` //玩家账户的ID
-	BusinessModule string           `json:"business_module" gorm:"type:varchar(64);not null;comment:'业务模块'"`
-	ActionType     string           `json:"action_type" gorm:"type:varchar(64);not null;comment:'操作类型'"`
-	Tokens         []ERC20TokenData `json:"tokens" gorm:"type:json;not null"` //变更的代币
-	Fee            []ERC20TokenData `json:"fee" gorm:"type:json;not null"`    // 手续费
-	Status         string           `json:"status" gorm:"type:varchar(64);not null;comment:处理状态"`
-	OriginalWallet Wallet           `json:"original_wallet" gorm:"type:json;not null;comment:'变更前的钱包数据'"`
-	SettledWallet  Wallet           `json:"settled_wallet" gorm:"type:json;not null;comment:'变更后的钱包数据'"`
+	GameClient     int                  `json:"game_client"`
+	AccountId      uint                 `json:"account_id"` //玩家账户的ID
+	BusinessModule string               `json:"business_module" gorm:"type:varchar(64);not null;comment:'业务模块'"`
+	ActionType     string               `json:"action_type" gorm:"type:varchar(64);not null;comment:'操作类型'"`
+	Tokens         ERC20TokenCollection `json:"tokens" gorm:"type:json;not null"` //变更的代币
+	Fees           ERC20TokenCollection `json:"fees" gorm:"type:json;"`           // 手续费
+	Status         string               `json:"status" gorm:"type:varchar(64);not null;comment:处理状态"`
+	OriginalWallet Wallet               `json:"original_wallet" gorm:"type:json;not null;comment:'变更前的钱包数据'"`
+	SettledWallet  Wallet               `json:"settled_wallet" gorm:"type:json;not null;comment:'变更后的钱包数据'"`
 }
 
 func (s ERC20WalletLog) TableName() string {
@@ -43,16 +56,16 @@ func (s ERC20WalletLog) TableName() string {
 // ERC1155WalletLog 钱包流水日志
 type ERC1155WalletLog struct {
 	gorm.Model     `swagger-ignore:"true"`
-	GameClient     int              `json:"game_client"`
-	AccountId      uint             `json:"account_id"` //往家账户的ID
-	BusinessModule string           `json:"business_module" gorm:"type:varchar(64);not null;comment:'业务模块'"`
-	ActionType     string           `json:"action_type" gorm:"type:varchar(64);not null;comment:'操作类型'"`
-	Ids            string           `json:"ids;comment:'变更的NFT IDs'"`
-	Values         string           `json:"values"`                        // 变更的NFT数量
-	Fee            []ERC20TokenData `json:"fee" gorm:"type:json;not null"` // 手续费
-	Status         string           `json:"status" gorm:"type:varchar(64);not null;comment:处理状态"`
-	OriginalWallet Wallet           `json:"original_wallet" gorm:"type:json;not null;comment:'变更前的钱包数据'"`
-	SettledWallet  Wallet           `json:"settled_wallet" gorm:"type:json;not null;comment:'变更后的钱包数据'"`
+	GameClient     int                  `json:"game_client"`
+	AccountId      uint                 `json:"account_id"` //往家账户的ID
+	BusinessModule string               `json:"business_module" gorm:"type:varchar(64);not null;comment:'业务模块'"`
+	ActionType     string               `json:"action_type" gorm:"type:varchar(64);not null;comment:'操作类型'"`
+	Ids            string               `json:"ids;comment:'变更的NFT IDs'"`
+	Values         string               `json:"values"`                 // 变更的NFT数量
+	Fees           ERC20TokenCollection `json:"fees" gorm:"type:json;"` // 手续费
+	Status         string               `json:"status" gorm:"type:varchar(64);not null;comment:处理状态"`
+	OriginalWallet Wallet               `json:"original_wallet" gorm:"type:json;not null;comment:'变更前的钱包数据'"`
+	SettledWallet  Wallet               `json:"settled_wallet" gorm:"type:json;comment:'变更后的钱包数据'"`
 }
 
 func (s ERC1155WalletLog) TableName() string {

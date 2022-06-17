@@ -5,6 +5,7 @@ type AssetType int
 const (
 	ERC20AssetType   = 0
 	ERC1155AssetType = 1
+	Other            = 2
 )
 
 type ERC20Token int

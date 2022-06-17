@@ -5,8 +5,9 @@ import (
 	"fmt"
 	log "github.com/sirupsen/logrus"
 	"gorm.io/gorm"
-	"neco-wallet-center/internal/comm"
 	"neco-wallet-center/internal/model"
+	"neco-wallet-center/internal/model/initial"
+	"neco-wallet-center/internal/service"
 	"neco-wallet-center/internal/utils"
 	"os"
 )
@@ -25,8 +26,10 @@ func main() {
 	}
 	migration(db)
 
-	model.WalletDAO.InitWallet(context.Background(), comm.NecoFishing, 1, "0x53e310e72592591263AF6b07EaC18e6bB08eD5bb")
-
+	err = service.NewWalletCenterService().HandleWalletCommand(context.Background(), initial.InitNecoFishingFeeChargerAccountCommand)
+	if err != nil {
+		fmt.Printf("err: %v \n", err)
+	}
 	//l, err := net.Listen("tcp", ":8081")
 	//if err != nil {
 	//	log.Fatal(err)
