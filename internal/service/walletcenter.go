@@ -108,10 +108,10 @@ func handleERC20Command(ctx context.Context, command model.WalletCommand) (model
 		}
 
 		// 1. 验证用户当前钱包状态是否正常
-		result, err := validator.ValidateWallet(userWallet)
-		if err != nil || result == false {
-			return err
-		}
+		//result, err := validator.ValidateWallet(userWallet)
+		//if err != nil || result == false {
+		//	return err
+		//}
 
 		// 2.插入一条log信息
 		log, err := logService.InsertNewERC20WalletLog(tx, command, userWallet)
@@ -134,6 +134,10 @@ func handleERC20Command(ctx context.Context, command model.WalletCommand) (model
 				userERC20TokenWallet.Balance += token.Value
 				userERC20TokenWallet.TotalDeposit += token.Value
 				userWallet.ERC20TokenData[index] = userERC20TokenWallet
+				err = model.WalletDAO.UpdateERC20WalletData(tx, userERC20TokenWallet)
+				if err != nil {
+					return err
+				}
 			}
 			break
 		case comm.Withdraw:
@@ -142,6 +146,10 @@ func handleERC20Command(ctx context.Context, command model.WalletCommand) (model
 				userERC20TokenWallet.Balance -= token.Value
 				userERC20TokenWallet.TotalWithdraw += token.Value
 				userWallet.ERC20TokenData[index] = userERC20TokenWallet
+				err = model.WalletDAO.UpdateERC20WalletData(tx, userERC20TokenWallet)
+				if err != nil {
+					return err
+				}
 			}
 			break
 		case comm.Income:
@@ -150,6 +158,10 @@ func handleERC20Command(ctx context.Context, command model.WalletCommand) (model
 				userERC20TokenWallet.Balance += token.Value
 				userERC20TokenWallet.TotalIncome += token.Value
 				userWallet.ERC20TokenData[index] = userERC20TokenWallet
+				err = model.WalletDAO.UpdateERC20WalletData(tx, userERC20TokenWallet)
+				if err != nil {
+					return err
+				}
 			}
 			break
 		case comm.Spend:
@@ -158,6 +170,10 @@ func handleERC20Command(ctx context.Context, command model.WalletCommand) (model
 				userERC20TokenWallet.Balance -= token.Value
 				userERC20TokenWallet.TotalSpend += token.Value
 				userWallet.ERC20TokenData[index] = userERC20TokenWallet
+				err = model.WalletDAO.UpdateERC20WalletData(tx, userERC20TokenWallet)
+				if err != nil {
+					return err
+				}
 			}
 			break
 		case comm.ChargeFee:
@@ -166,6 +182,10 @@ func handleERC20Command(ctx context.Context, command model.WalletCommand) (model
 				userERC20TokenWallet.Balance -= token.Value
 				userERC20TokenWallet.TotalFee += token.Value
 				userWallet.ERC20TokenData[index] = userERC20TokenWallet
+				err = model.WalletDAO.UpdateERC20WalletData(tx, userERC20TokenWallet)
+				if err != nil {
+					return err
+				}
 			}
 			break
 		default:
@@ -178,13 +198,6 @@ func handleERC20Command(ctx context.Context, command model.WalletCommand) (model
 			return err
 		}
 		userWallet.CheckSign = newCheckSign
-
-		// 7. 更新用户资产
-		err = model.WalletDAO.UpdateWallet(tx, userWallet)
-		if err != nil {
-			_, err = logService.UpdateERC20WalletLog(tx, log, comm.Failed, userWallet)
-			return err
-		}
 
 		// 8. 更新log信息
 		_, err = NewWalletLogService().UpdateERC20WalletLog(tx, log, comm.Done, userWallet)
@@ -210,10 +223,10 @@ func handleERC1155Command(ctx context.Context, command model.WalletCommand) (mod
 		}
 
 		// 1. 验证用户当前钱包状态是否正常
-		result, err := validator.ValidateWallet(userWallet)
-		if err != nil || result == false {
-			return err
-		}
+		//result, err := validator.ValidateWallet(userWallet)
+		//if err != nil || result == false {
+		//	return err
+		//}
 
 		// 2.插入一条log信息
 		log, err := logService.InsertNewERC1155WalletLog(tx, command, userWallet)
@@ -245,6 +258,10 @@ func handleERC1155Command(ctx context.Context, command model.WalletCommand) (mod
 
 				userWallet.ERC1155TokenData.Ids = utils.ConvertUintArrayToString(ids)
 				userWallet.ERC1155TokenData.Values = utils.ConvertUintArrayToString(values)
+				err = model.WalletDAO.UpdateERC1155WalletData(tx, userWallet.ERC1155TokenData)
+				if err != nil {
+					return err
+				}
 			}
 			break
 		case comm.Withdraw, comm.Spend:
@@ -262,6 +279,10 @@ func handleERC1155Command(ctx context.Context, command model.WalletCommand) (mod
 
 				userWallet.ERC1155TokenData.Ids = utils.ConvertUintArrayToString(ids)
 				userWallet.ERC1155TokenData.Values = utils.ConvertUintArrayToString(values)
+				err = model.WalletDAO.UpdateERC1155WalletData(tx, userWallet.ERC1155TokenData)
+				if err != nil {
+					return err
+				}
 			}
 			break
 		default:
@@ -274,13 +295,6 @@ func handleERC1155Command(ctx context.Context, command model.WalletCommand) (mod
 			return err
 		}
 		userWallet.CheckSign = newCheckSign
-
-		// 7. 更新用户资产
-		err = model.WalletDAO.UpdateWallet(tx, userWallet)
-		if err != nil {
-			_, err = logService.UpdateERC1155WalletLog(tx, log, comm.Failed, userWallet)
-			return err
-		}
 
 		// 8. 更新log信息
 		_, err = NewWalletLogService().UpdateERC1155WalletLog(tx, log, comm.Done, userWallet)

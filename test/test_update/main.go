@@ -24,7 +24,7 @@ func main() {
 		AccountId:      11,
 		GameClient:     pb.GameClient_NecoFishing,
 		BusinessModule: "Update",
-		AssetType:      pb.AssetType_ERC20AssetType,
+		AssetType:      pb.AssetType_ERC1155AssetType,
 		ActionType:     pb.WalletActionType_Deposit,
 		ERC20TokenData: []*pb.ERC20TokenWallet{
 			&pb.ERC20TokenWallet{
@@ -39,8 +39,8 @@ func main() {
 			},
 		},
 		ERC1155TokenData: &pb.ERC1155TokenWallet{
-			Ids:    []uint64{},
-			Values: []uint64{},
+			Ids:    []uint64{10001},
+			Values: []uint64{1},
 		},
 		FeeData: []*pb.ERC20TokenWallet{
 			&pb.ERC20TokenWallet{

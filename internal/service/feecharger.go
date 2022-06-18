@@ -42,12 +42,11 @@ func (receiver *feeChargerService) ChargeFee(
 			feeChargerERC20TokenWallet.Balance += fee.Value
 			feeChargerERC20TokenWallet.TotalFee += fee.Value
 			feeChargerWallet.ERC20TokenData[index] = feeChargerERC20TokenWallet
+			err = model.WalletDAO.UpdateERC20WalletData(db, feeChargerERC20TokenWallet)
+			if err != nil {
+				return model.Wallet{}, err
+			}
 		}
-	}
-
-	err = model.WalletDAO.UpdateWallet(db, feeChargerWallet)
-	if err != nil {
-		return userWallet, err
 	}
 	return userWallet, nil
 }

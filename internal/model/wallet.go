@@ -94,3 +94,11 @@ func (dao walletDA0) CreateWallet(db *gorm.DB, wallet Wallet) error {
 	}
 	return nil
 }
+
+func (dao walletDA0) UpdateERC20WalletData(db *gorm.DB, newERC20Data ERC20TokenWallet) error {
+	return db.Save(&newERC20Data).Error
+}
+
+func (dao walletDA0) UpdateERC1155WalletData(db *gorm.DB, newERC1155Data ERC1155TokenWallet) error {
+	return db.Save(&newERC1155Data).Error
+}
