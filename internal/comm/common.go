@@ -26,6 +26,17 @@ func (t ERC20Token) String() string {
 	}
 }
 
+func GetERC20TokenType(name string) ERC20Token {
+	switch name {
+	case "NFISH":
+		return NFISH
+	case "BUSD":
+		return BUSD
+	default:
+		return NFISH
+	}
+}
+
 type WalletActionType int
 
 const (

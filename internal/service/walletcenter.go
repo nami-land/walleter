@@ -16,9 +16,9 @@ func NewWalletCenterService() *walletCenterService {
 	return &walletCenterService{}
 }
 
-func (s *walletCenterService) HandleWalletCommand(ctx context.Context, command model.WalletCommand) error {
+func (s *walletCenterService) HandleWalletCommand(ctx context.Context, command model.WalletCommand) (model.Wallet, error) {
 	if !command.GameClient.IsSupport() {
-		return errors.New("game client is invalid")
+		return model.Wallet{}, errors.New("game client is invalid")
 	}
 
 	switch command.ActionType {
@@ -29,7 +29,7 @@ func (s *walletCenterService) HandleWalletCommand(ctx context.Context, command m
 	}
 }
 
-func initWallet(ctx context.Context, command model.WalletCommand) error {
+func initWallet(ctx context.Context, command model.WalletCommand) (model.Wallet, error) {
 	err := model.GetDb(ctx).Transaction(func(tx1 *gorm.DB) error {
 		// 1. Insert change logs, including ERC20 logs and ERC1155 Log.
 		walletLogService := NewWalletLogService()
@@ -81,21 +81,24 @@ func initWallet(ctx context.Context, command model.WalletCommand) error {
 
 		return nil
 	})
-	return err
+	if err != nil {
+		return model.Wallet{}, err
+	}
+	return model.WalletDAO.GetWallet(model.GetDb(ctx), command.GameClient, command.AccountId)
 }
 
-func updateWallet(ctx context.Context, command model.WalletCommand) error {
+func updateWallet(ctx context.Context, command model.WalletCommand) (model.Wallet, error) {
 	switch command.AssetType {
 	case comm.ERC20AssetType:
 		return handleERC20Command(ctx, command)
 	case comm.ERC1155AssetType:
 		return handleERC1155Command(ctx, command)
 	default:
-		return errors.New("not support current asset type")
+		return model.Wallet{}, errors.New("not support current asset type")
 	}
 }
 
-func handleERC20Command(ctx context.Context, command model.WalletCommand) error {
+func handleERC20Command(ctx context.Context, command model.WalletCommand) (model.Wallet, error) {
 	err := model.GetDb(ctx).Transaction(func(tx *gorm.DB) error {
 		logService := NewWalletLogService()
 		validator := pkg.NewWalletValidator()
@@ -192,12 +195,12 @@ func handleERC20Command(ctx context.Context, command model.WalletCommand) error 
 		return nil
 	})
 	if err != nil {
-		return err
+		return model.Wallet{}, err
 	}
-	return nil
+	return model.WalletDAO.GetWallet(model.GetDb(ctx), command.GameClient, command.AccountId)
 }
 
-func handleERC1155Command(ctx context.Context, command model.WalletCommand) error {
+func handleERC1155Command(ctx context.Context, command model.WalletCommand) (model.Wallet, error) {
 	err := model.GetDb(ctx).Transaction(func(tx *gorm.DB) error {
 		logService := NewWalletLogService()
 		validator := pkg.NewWalletValidator()
@@ -287,9 +290,8 @@ func handleERC1155Command(ctx context.Context, command model.WalletCommand) erro
 		}
 		return nil
 	})
-
 	if err != nil {
-		return err
+		return model.Wallet{}, err
 	}
-	return nil
+	return model.WalletDAO.GetWallet(model.GetDb(ctx), command.GameClient, command.AccountId)
 }

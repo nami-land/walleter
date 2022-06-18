@@ -3,32 +3,24 @@ syntax = "proto3";
 option go_package = "./pb";
 
 service NecoWalletCenter {
-  rpc InitUserWallet (InitUserWalletRequest) returns (UserWallet) {}
   rpc UpdateUserWallet (UpdateUserWalletRequest) returns (UserWallet) {}
   rpc GetUserWallet (GetUserWalletRequest) returns (UserWallet) {}
 }
 
-message InitUserWalletRequest {
-  string AccountId = 1;
-  GameClient GameClient = 2;
-  WalletActionType ActionType = 3;
-}
-
 message UpdateUserWalletRequest {
-  string AccountId = 1;
+  uint64 AccountId = 1;
   GameClient GameClient = 2;
   string BusinessModule = 3;
   AssetType AssetType = 4;
   WalletActionType ActionType = 5;
   repeated ERC20TokenData ERC20TokenData = 6;
   ERC1155TokenData ERC1155TokenData = 7;
-  ActionStatus Status = 8;
+  repeated ERC20TokenData FeeData = 8;
 }
 
 message GetUserWalletRequest {
-  string AccountId = 1;
-  string PublicAddress = 2;
-  GameClient GameClient = 3;
+  uint64 AccountId = 1;
+  GameClient GameClient = 2;
 }
 
 message UserWallet {
@@ -42,15 +34,15 @@ message UserWallet {
 
 message ERC1155TokenData {
   uint64 Id = 1;
-  repeated uint32 Ids = 2;
-  repeated uint32 Values = 3;
+  repeated uint64 Ids = 2;
+  repeated uint64 Values = 3;
 }
 
 message ERC20TokenData {
   uint64 Id = 1;
   ERC20Token Token = 2;
   float Balance = 3;
-  int64 Decimal = 4;
+  uint64 Decimal = 4;
 }
 
 enum GameClient {
@@ -64,16 +56,17 @@ enum ERC20Token {
 }
 
 enum WalletActionType {
-  Income = 0;
-  Spend = 1;
-  Deposit = 3;
-  Withdraw = 4;
+    Initialize  = 0;
+    Income      = 1;
+    Spend       = 2;
+    Deposit     = 3;
+    Withdraw    = 4;
+    ChargeFee   = 5;
 }
 
 enum ActionStatus {
   Pending = 0;
   Succeed = 1;
-  Failed = 2;
 }
 
 enum AssetType {

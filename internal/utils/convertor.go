@@ -39,6 +39,22 @@ func ConvertIntArrayToBigIntArray(arr []int32) []*big.Int {
 	return result
 }
 
+func ConvertUInt64ArrayToUIntArray(arr []uint64) []uint {
+	var result []uint
+	for _, item := range arr {
+		result = append(result, uint(item))
+	}
+	return result
+}
+
+func CovertUIntArrayToUInt64Array(arr []uint) []uint64 {
+	var result []uint64
+	for _, item := range arr {
+		result = append(result, uint64(item))
+	}
+	return result
+}
+
 func GetIndexFromUIntArray(array []uint, value uint) int {
 	for index, num := range array {
 		if num == value {
