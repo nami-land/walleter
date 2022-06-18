@@ -30,9 +30,9 @@ func main() {
 
 	for _, command := range initial.InitializedCommands {
 		_, err = service.NewWalletCenterService().HandleWalletCommand(context.Background(), command)
-		if err != nil && err.Error() != "record is already existed" {
-			log.Fatalf("initialize official account failed. error message: %v", err)
-		}
+		//if err != nil && err.Error() != "record is already existed" {
+		//	log.Fatalf("initialize official account failed. error message: %v", err)
+		//}
 	}
 
 	l, err := net.Listen("tcp", ":8081")

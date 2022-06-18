@@ -47,7 +47,7 @@ func (receiver *commandBuilder) BuildCommandFromRequest(request *pb.UpdateUserWa
 		ERC20Commands:  erc20Commands,
 		ERC1155Command: erc1155Command,
 		BusinessModule: request.BusinessModule,
-		ActionType:     comm.WalletActionType(pb.WalletActionType_Initialize),
+		ActionType:     comm.WalletActionType(request.ActionType),
 		FeeCommands:    feeCommands,
 	}
 }

@@ -47,7 +47,6 @@ func initWallet(ctx context.Context, command model.WalletCommand) (model.Wallet,
 		erc20DataArray := pkg.ParseCommandToERC20WalletArray(command)
 		erc1155Data := pkg.ParseCommandToERC1155Wallet(command)
 		wallet := model.Wallet{
-			Model:            gorm.Model{},
 			GameClient:       int(command.GameClient),
 			AccountId:        command.AccountId,
 			PublicAddress:    command.PublicAddress,

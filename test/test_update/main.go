@@ -23,18 +23,18 @@ func main() {
 	reply, err := client.UpdateUserWallet(ctx, &pb.UpdateUserWalletRequest{
 		AccountId:      11,
 		GameClient:     pb.GameClient_NecoFishing,
-		BusinessModule: "Initialization",
-		AssetType:      pb.AssetType_Other,
-		ActionType:     pb.WalletActionType_Initialize,
+		BusinessModule: "Update",
+		AssetType:      pb.AssetType_ERC20AssetType,
+		ActionType:     pb.WalletActionType_Deposit,
 		ERC20TokenData: []*pb.ERC20TokenWallet{
 			&pb.ERC20TokenWallet{
 				Token:   pb.ERC20Token_NFISH,
-				Balance: 0,
+				Balance: 10,
 				Decimal: 18,
 			},
 			&pb.ERC20TokenWallet{
 				Token:   pb.ERC20Token_BUSD,
-				Balance: 0,
+				Balance: 10,
 				Decimal: 18,
 			},
 		},
@@ -42,7 +42,18 @@ func main() {
 			Ids:    []uint64{},
 			Values: []uint64{},
 		},
-		FeeData: []*pb.ERC20TokenWallet{},
+		FeeData: []*pb.ERC20TokenWallet{
+			&pb.ERC20TokenWallet{
+				Token:   pb.ERC20Token_NFISH,
+				Balance: 1,
+				Decimal: 18,
+			},
+			&pb.ERC20TokenWallet{
+				Token:   pb.ERC20Token_BUSD,
+				Balance: 1,
+				Decimal: 18,
+			},
+		},
 	})
 	if err != nil {
 		fmt.Println(err.Error())

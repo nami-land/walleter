@@ -3,9 +3,7 @@ package model
 import (
 	"database/sql/driver"
 	"encoding/json"
-	"errors"
 	"fmt"
-	"github.com/go-sql-driver/mysql"
 	"gorm.io/gorm"
 	"neco-wallet-center/internal/comm"
 )
@@ -13,8 +11,8 @@ import (
 type Wallet struct {
 	gorm.Model       `swagger-ignore:"true"`
 	GameClient       int                `json:"game_client"`
-	AccountId        uint               `json:"account_id" gorm:"unique; not null"` // 玩家账户ID
-	PublicAddress    string             `json:"address" gorm:"unique;not null"`     // 玩家的钱包地址
+	AccountId        uint               `json:"account_id" gorm:"unique;not null"` // 玩家账户ID
+	PublicAddress    string             `json:"address"`                           // 玩家的钱包地址
 	ERC20TokenData   []ERC20TokenWallet `json:"erc_20_token_data" gorm:"foreignKey:AccountId;references:AccountId"`
 	ERC1155TokenData ERC1155TokenWallet `json:"erc_1155_token_data" gorm:"foreignKey:AccountId;references:AccountId"`
 	CheckSign        string             `json:"check_sign" gorm:"type:varchar(128);not null;comment:'安全签名'"`
@@ -87,11 +85,11 @@ func (dao walletDA0) UpdateWallet(db *gorm.DB, newWallet Wallet) error {
 }
 
 func (dao walletDA0) CreateWallet(db *gorm.DB, wallet Wallet) error {
-	var mysqlErr *mysql.MySQLError
+	//var mysqlErr *mysql.MySQLError
 	if err := db.Create(&wallet).Error; err != nil {
-		if errors.As(err, &mysqlErr) && mysqlErr.Number == 1062 {
-			return errors.New("record is already existed")
-		}
+		//if errors.As(err, &mysqlErr) && mysqlErr.Number == 1062 {
+		//	return errors.New("record is already existed")
+		//}
 		return err
 	}
 	return nil
