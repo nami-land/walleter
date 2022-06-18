@@ -108,10 +108,10 @@ func handleERC20Command(ctx context.Context, command model.WalletCommand) (model
 		}
 
 		// 1. 验证用户当前钱包状态是否正常
-		//result, err := validator.ValidateWallet(userWallet)
-		//if err != nil || result == false {
-		//	return err
-		//}
+		result, err := validator.ValidateWallet(userWallet)
+		if err != nil || result == false {
+			return err
+		}
 
 		// 2.插入一条log信息
 		log, err := logService.InsertNewERC20WalletLog(tx, command, userWallet)
@@ -223,10 +223,10 @@ func handleERC1155Command(ctx context.Context, command model.WalletCommand) (mod
 		}
 
 		// 1. 验证用户当前钱包状态是否正常
-		//result, err := validator.ValidateWallet(userWallet)
-		//if err != nil || result == false {
-		//	return err
-		//}
+		result, err := validator.ValidateWallet(userWallet)
+		if err != nil || result == false {
+			return err
+		}
 
 		// 2.插入一条log信息
 		log, err := logService.InsertNewERC1155WalletLog(tx, command, userWallet)
