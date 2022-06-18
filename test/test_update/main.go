@@ -42,7 +42,18 @@ func main() {
 			Ids:    []uint64{10001},
 			Values: []uint64{1},
 		},
-		FeeData: []*pb.ERC20TokenWallet{},
+		FeeData: []*pb.ERC20TokenWallet{
+			&pb.ERC20TokenWallet{
+				Token:   pb.ERC20Token_NFISH,
+				Balance: 1,
+				Decimal: 18,
+			},
+			&pb.ERC20TokenWallet{
+				Token:   pb.ERC20Token_BUSD,
+				Balance: 1,
+				Decimal: 18,
+			},
+		},
 	})
 	if err != nil {
 		fmt.Println(err.Error())

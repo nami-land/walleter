@@ -3,8 +3,6 @@ package main
 import (
 	"context"
 	"fmt"
-	log "github.com/sirupsen/logrus"
-	"gorm.io/gorm"
 	"neco-wallet-center/internal/model"
 	"neco-wallet-center/internal/model/initial"
 	"neco-wallet-center/internal/server"
@@ -12,6 +10,9 @@ import (
 	"neco-wallet-center/internal/utils"
 	"net"
 	"os"
+
+	log "github.com/sirupsen/logrus"
+	"gorm.io/gorm"
 )
 
 func main() {

@@ -28,15 +28,43 @@ func (receiver walletValidator) ValidateWallet(wallet model.Wallet) (bool, error
 }
 
 func (receiver walletValidator) GenerateNewSignHash(wallet model.Wallet) (string, error) {
-	wallet.CheckSign = ""
-	wallet.Model = gorm.Model{}
-	for index, token := range wallet.ERC20TokenData {
-		token.Model = gorm.Model{}
-		wallet.ERC20TokenData[index] = token
+	var newERC20TokenData []model.ERC20TokenWallet
+	for _, token := range wallet.ERC20TokenData {
+		erc20Data := model.ERC20TokenWallet{
+			Model:         gorm.Model{},
+			GameClient:    token.GameClient,
+			AccountId:     token.AccountId,
+			Token:         token.Token,
+			Balance:       token.Balance,
+			Decimal:       token.Decimal,
+			TotalIncome:   token.TotalIncome,
+			TotalSpend:    token.TotalSpend,
+			TotalDeposit:  token.TotalDeposit,
+			TotalWithdraw: token.TotalWithdraw,
+			TotalFee:      token.TotalFee,
+		}
+		newERC20TokenData = append(newERC20TokenData, erc20Data)
 	}
-	wallet.ERC1155TokenData.Model = gorm.Model{}
 
-	b, err := json.Marshal(wallet)
+	erc1155Data := model.ERC1155TokenWallet{
+		Model:      gorm.Model{},
+		GameClient: wallet.ERC1155TokenData.GameClient,
+		AccountId:  wallet.ERC1155TokenData.AccountId,
+		Ids:        wallet.ERC1155TokenData.Ids,
+		Values:     wallet.ERC1155TokenData.Values,
+	}
+
+	tempWallet := model.Wallet{
+		Model:            gorm.Model{},
+		GameClient:       wallet.GameClient,
+		AccountId:        wallet.AccountId,
+		PublicAddress:    wallet.PublicAddress,
+		ERC20TokenData:   newERC20TokenData,
+		ERC1155TokenData: erc1155Data,
+		CheckSign:        "",
+	}
+
+	b, err := json.Marshal(tempWallet)
 	if err != nil {
 		return "", err
 	}

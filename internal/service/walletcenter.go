@@ -3,11 +3,12 @@ package service
 import (
 	"context"
 	"errors"
-	"gorm.io/gorm"
 	"neco-wallet-center/internal/comm"
 	"neco-wallet-center/internal/model"
 	"neco-wallet-center/internal/pkg"
 	"neco-wallet-center/internal/utils"
+
+	"gorm.io/gorm"
 )
 
 type walletCenterService struct{}
@@ -198,6 +199,10 @@ func handleERC20Command(ctx context.Context, command model.WalletCommand) (model
 			return err
 		}
 		userWallet.CheckSign = newCheckSign
+		err = model.WalletDAO.UpdateWalletCheckSign(tx, userWallet)
+		if err != nil {
+			return err
+		}
 
 		// 8. 更新log信息
 		_, err = NewWalletLogService().UpdateERC20WalletLog(tx, log, comm.Done, userWallet)
@@ -224,7 +229,7 @@ func handleERC1155Command(ctx context.Context, command model.WalletCommand) (mod
 
 		// 1. 验证用户当前钱包状态是否正常
 		result, err := validator.ValidateWallet(userWallet)
-		if err != nil || result == false {
+		if err != nil || !result {
 			return err
 		}
 
@@ -295,6 +300,10 @@ func handleERC1155Command(ctx context.Context, command model.WalletCommand) (mod
 			return err
 		}
 		userWallet.CheckSign = newCheckSign
+		err = model.WalletDAO.UpdateWalletCheckSign(tx, userWallet)
+		if err != nil {
+			return err
+		}
 
 		// 8. 更新log信息
 		_, err = NewWalletLogService().UpdateERC1155WalletLog(tx, log, comm.Done, userWallet)
