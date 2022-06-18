@@ -7,8 +7,10 @@ import (
 	"gorm.io/gorm"
 	"neco-wallet-center/internal/model"
 	"neco-wallet-center/internal/model/initial"
+	"neco-wallet-center/internal/server"
 	"neco-wallet-center/internal/service"
 	"neco-wallet-center/internal/utils"
+	"net"
 	"os"
 )
 
@@ -28,21 +30,22 @@ func main() {
 
 	for _, command := range initial.InitializedCommands {
 		_, err = service.NewWalletCenterService().HandleWalletCommand(context.Background(), command)
-		if err != nil {
-			fmt.Printf("err: %v \n", err)
+		if err != nil && err.Error() != "record is already existed" {
+			log.Fatalf("initialize official account failed. error message: %v", err)
 		}
 	}
-	//l, err := net.Listen("tcp", ":8081")
-	//if err != nil {
-	//	log.Fatal(err)
-	//}
-	//
-	//log.Infoln("start gRPC server")
-	//grpcServer := server.NewGrpcServer()
-	//err = grpcServer.Serve(l)
-	//if err != nil {
-	//	log.Fatal("Launch gRPC server failed.")
-	//}
+
+	l, err := net.Listen("tcp", ":8081")
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	log.Infoln("start gRPC server")
+	grpcServer := server.NewGrpcServer()
+	err = grpcServer.Serve(l)
+	if err != nil {
+		log.Fatal("Launch gRPC server failed.")
+	}
 }
 
 func migration(db *gorm.DB) {

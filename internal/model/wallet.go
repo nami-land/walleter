@@ -3,7 +3,9 @@ package model
 import (
 	"database/sql/driver"
 	"encoding/json"
+	"errors"
 	"fmt"
+	"github.com/go-sql-driver/mysql"
 	"gorm.io/gorm"
 	"neco-wallet-center/internal/comm"
 )
@@ -68,6 +70,8 @@ var WalletDAO = &walletDA0{}
 func (dao walletDA0) GetWallet(db *gorm.DB, gameClient comm.GameClient, accountId uint) (Wallet, error) {
 	var wallet Wallet
 	if err := db.
+		Preload("ERC20TokenData").
+		Preload("ERC1155TokenData").
 		Where("game_client = ? AND account_id = ?", gameClient, accountId).
 		First(&wallet).Error; err != nil {
 		return Wallet{}, err
@@ -83,7 +87,11 @@ func (dao walletDA0) UpdateWallet(db *gorm.DB, newWallet Wallet) error {
 }
 
 func (dao walletDA0) CreateWallet(db *gorm.DB, wallet Wallet) error {
+	var mysqlErr *mysql.MySQLError
 	if err := db.Create(&wallet).Error; err != nil {
+		if errors.As(err, &mysqlErr) && mysqlErr.Number == 1062 {
+			return errors.New("record is already existed")
+		}
 		return err
 	}
 	return nil

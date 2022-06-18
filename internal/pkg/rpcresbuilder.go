@@ -28,7 +28,6 @@ func convertERC20Data(array []model.ERC20TokenWallet) []*pb.ERC20TokenWallet {
 	var result []*pb.ERC20TokenWallet
 	for _, item := range array {
 		tokenData := pb.ERC20TokenWallet{
-			Id:      uint64(item.ID),
 			Token:   pb.ERC20Token(comm.GetERC20TokenType(item.Token)),
 			Balance: float32(item.Balance),
 			Decimal: uint64(item.Decimal),
@@ -40,7 +39,6 @@ func convertERC20Data(array []model.ERC20TokenWallet) []*pb.ERC20TokenWallet {
 
 func convertERC1155Data(data model.ERC1155TokenWallet) *pb.ERC1155TokenWallet {
 	return &pb.ERC1155TokenWallet{
-		Id:     uint64(data.ID),
 		Ids:    utils.CovertUIntArrayToUInt64Array(utils.ConvertStringToUIntArray(data.Ids)),
 		Values: utils.CovertUIntArrayToUInt64Array(utils.ConvertStringToUIntArray(data.Values)),
 	}
