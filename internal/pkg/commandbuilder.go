@@ -35,8 +35,8 @@ func (receiver *commandBuilder) BuildCommandFromRequest(request *pb.UpdateUserWa
 	}
 
 	erc1155Command := model.ERC1155Command{
-		Ids:    utils.ConvertUInt32ArrayToUIntArray(request.ERC1155TokenData.Ids),
-		Values: utils.ConvertUInt32ArrayToUIntArray(request.ERC1155TokenData.Values),
+		Ids:    utils.ConvertUInt64ArrayToUIntArray(request.ERC1155TokenData.Ids),
+		Values: utils.ConvertUInt64ArrayToUIntArray(request.ERC1155TokenData.Values),
 	}
 
 	return model.WalletCommand{

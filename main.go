@@ -27,7 +27,7 @@ func main() {
 	migration(db)
 
 	for _, command := range initial.InitializedCommands {
-		err = service.NewWalletCenterService().HandleWalletCommand(context.Background(), command)
+		_, err = service.NewWalletCenterService().HandleWalletCommand(context.Background(), command)
 		if err != nil {
 			fmt.Printf("err: %v \n", err)
 		}
