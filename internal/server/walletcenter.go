@@ -9,22 +9,17 @@ type walletCenterServer struct {
 	pb.UnimplementedNecoWalletCenterServer
 }
 
-func (w walletCenterServer) UpdateUserERC20Wallet(ctx context.Context, request *pb.UpdateUserERC20WalletRequest) (*pb.UpdateUserERC20WalletResponse, error) {
+func (w walletCenterServer) InitUserWallet(ctx context.Context, request *pb.InitUserWalletRequest) (*pb.UserWallet, error) {
 	//TODO implement me
 	panic("implement me")
 }
 
-func (w walletCenterServer) UpdateUserERC1155Wallet(ctx context.Context, request *pb.UpdateUserERC1155WalletRequest) (*pb.UpdateUserERC1155WalletResponse, error) {
+func (w walletCenterServer) UpdateUserWallet(ctx context.Context, request *pb.UpdateUserWalletRequest) (*pb.UserWallet, error) {
 	//TODO implement me
 	panic("implement me")
 }
 
-func (w walletCenterServer) GetUserERC20Wallet(ctx context.Context, request *pb.GetUserERC20WalletRequest) (*pb.GetUserERC20WalletResponse, error) {
-	//TODO implement me
-	panic("implement me")
-}
-
-func (w walletCenterServer) GetUserERC1155Wallet(ctx context.Context, request *pb.GetUserERC1155WalletRequest) (*pb.GetUserERC1155WalletResponse, error) {
+func (w walletCenterServer) GetUserWallet(ctx context.Context, request *pb.GetUserWalletRequest) (*pb.UserWallet, error) {
 	//TODO implement me
 	panic("implement me")
 }

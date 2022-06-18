@@ -57,7 +57,7 @@ func initWallet(ctx context.Context, command model.WalletCommand) error {
 		}
 
 		// 3. generator a new check sign
-		newCheckSign, err := NewWalletValidator().GenerateNewSignHash(wallet)
+		newCheckSign, err := pkg.NewWalletValidator().GenerateNewSignHash(wallet)
 		if err != nil {
 			return err
 		}
@@ -98,7 +98,7 @@ func updateWallet(ctx context.Context, command model.WalletCommand) error {
 func handleERC20Command(ctx context.Context, command model.WalletCommand) error {
 	err := model.GetDb(ctx).Transaction(func(tx *gorm.DB) error {
 		logService := NewWalletLogService()
-		validator := NewWalletValidator()
+		validator := pkg.NewWalletValidator()
 
 		userWallet, err := model.WalletDAO.GetWallet(model.GetDb(ctx), command.GameClient, command.AccountId)
 		if err != nil {
@@ -200,7 +200,7 @@ func handleERC20Command(ctx context.Context, command model.WalletCommand) error 
 func handleERC1155Command(ctx context.Context, command model.WalletCommand) error {
 	err := model.GetDb(ctx).Transaction(func(tx *gorm.DB) error {
 		logService := NewWalletLogService()
-		validator := NewWalletValidator()
+		validator := pkg.NewWalletValidator()
 
 		userWallet, err := model.WalletDAO.GetWallet(model.GetDb(ctx), command.GameClient, command.AccountId)
 		if err != nil {
