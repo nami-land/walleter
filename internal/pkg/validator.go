@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"gorm.io/gorm"
 	"neco-wallet-center/internal/model"
 )
 
@@ -16,7 +17,6 @@ func NewWalletValidator() *walletValidator {
 
 func (receiver walletValidator) ValidateWallet(wallet model.Wallet) (bool, error) {
 	checkSign := wallet.CheckSign
-	wallet.CheckSign = ""
 	md5Value, err := receiver.GenerateNewSignHash(wallet)
 	if err != nil {
 		return false, err
@@ -28,6 +28,14 @@ func (receiver walletValidator) ValidateWallet(wallet model.Wallet) (bool, error
 }
 
 func (receiver walletValidator) GenerateNewSignHash(wallet model.Wallet) (string, error) {
+	wallet.CheckSign = ""
+	wallet.Model = gorm.Model{}
+	for index, token := range wallet.ERC20TokenData {
+		token.Model = gorm.Model{}
+		wallet.ERC20TokenData[index] = token
+	}
+	wallet.ERC1155TokenData.Model = gorm.Model{}
+
 	b, err := json.Marshal(wallet)
 	if err != nil {
 		return "", err

@@ -21,7 +21,7 @@ func main() {
 	}
 	client := pb.NewNecoWalletCenterClient(conn)
 	reply, err := client.UpdateUserWallet(ctx, &pb.UpdateUserWalletRequest{
-		AccountId:      11,
+		AccountId:      21,
 		GameClient:     pb.GameClient_NecoFishing,
 		BusinessModule: "Initialization",
 		AssetType:      pb.AssetType_Other,
