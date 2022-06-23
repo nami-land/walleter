@@ -261,8 +261,8 @@ func handleERC1155Command(ctx context.Context, command model.WalletCommand) (mod
 					values[i] = values[i] + value
 				}
 
-				userWallet.ERC1155TokenData.Ids = utils.ConvertUintArrayToString(ids)
-				userWallet.ERC1155TokenData.Values = utils.ConvertUintArrayToString(values)
+				userWallet.ERC1155TokenData.Ids = utils.ConvertUintArrayToString(ids, ",")
+				userWallet.ERC1155TokenData.Values = utils.ConvertUintArrayToString(values, ",")
 				err = model.WalletDAO.UpdateERC1155WalletData(tx, userWallet.ERC1155TokenData)
 				if err != nil {
 					return err
@@ -282,8 +282,8 @@ func handleERC1155Command(ctx context.Context, command model.WalletCommand) (mod
 					values[i] = values[i] - value
 				}
 
-				userWallet.ERC1155TokenData.Ids = utils.ConvertUintArrayToString(ids)
-				userWallet.ERC1155TokenData.Values = utils.ConvertUintArrayToString(values)
+				userWallet.ERC1155TokenData.Ids = utils.ConvertUintArrayToString(ids, ",")
+				userWallet.ERC1155TokenData.Values = utils.ConvertUintArrayToString(values, ",")
 				err = model.WalletDAO.UpdateERC1155WalletData(tx, userWallet.ERC1155TokenData)
 				if err != nil {
 					return err

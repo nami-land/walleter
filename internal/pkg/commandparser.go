@@ -27,8 +27,8 @@ func ParseCommandToERC1155Wallet(command model.WalletCommand) model.ERC1155Token
 		Model:      gorm.Model{},
 		GameClient: int(command.GameClient),
 		AccountId:  command.AccountId,
-		Ids:        utils.ConvertUintArrayToString(command.ERC1155Command.Ids),
-		Values:     utils.ConvertUintArrayToString(command.ERC1155Command.Values),
+		Ids:        utils.ConvertUintArrayToString(command.ERC1155Command.Ids, ","),
+		Values:     utils.ConvertUintArrayToString(command.ERC1155Command.Values, ","),
 	}
 }
 
@@ -59,8 +59,8 @@ func ParseCommandToERC1155WalletLog(command model.WalletCommand, wallet model.Wa
 		AccountId:      command.AccountId,
 		BusinessModule: command.BusinessModule,
 		ActionType:     command.ActionType.String(),
-		Ids:            utils.ConvertUintArrayToString(command.ERC1155Command.Ids),
-		Values:         utils.ConvertUintArrayToString(command.ERC1155Command.Values),
+		Ids:            utils.ConvertUintArrayToString(command.ERC1155Command.Ids, ","),
+		Values:         utils.ConvertUintArrayToString(command.ERC1155Command.Values, ","),
 		Fees:           model.ERC20TokenCollection{Items: fees},
 		Status:         comm.Pending.String(),
 		OriginalWallet: wallet,

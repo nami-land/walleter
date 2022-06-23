@@ -24,30 +24,29 @@ func (receiver *feeChargerService) ChargeFee(
 		return userWallet, err
 	}
 
-	if len(command.FeeCommands) > 0 {
-		for _, fee := range command.FeeCommands {
-			if fee.Value <= 0 {
-				continue
-			}
-			index, userERC20TokenWallet := getUserERC20TokenWallet(userWallet.ERC20TokenData, fee.Token)
-			if index < 0 || userERC20TokenWallet.Balance < fee.Value {
-				return userWallet, errors.New("insufficient balance for fee")
-			}
+	for _, fee := range command.FeeCommands {
+		if fee.Value <= 0 {
+			continue
+		}
+		index, userERC20TokenWallet := getUserERC20TokenWallet(userWallet.ERC20TokenData, fee.Token)
+		if index < 0 || userERC20TokenWallet.Balance < fee.Value {
+			return userWallet, errors.New("insufficient balance for fee")
+		}
 
-			userERC20TokenWallet.Balance -= fee.Value
-			userERC20TokenWallet.TotalFee += fee.Value
-			userWallet.ERC20TokenData[index] = userERC20TokenWallet
+		userERC20TokenWallet.Balance -= fee.Value
+		userERC20TokenWallet.TotalFee += fee.Value
+		userWallet.ERC20TokenData[index] = userERC20TokenWallet
 
-			index, feeChargerERC20TokenWallet := getUserERC20TokenWallet(feeChargerWallet.ERC20TokenData, fee.Token)
-			feeChargerERC20TokenWallet.Balance += fee.Value
-			feeChargerERC20TokenWallet.TotalFee += fee.Value
-			feeChargerWallet.ERC20TokenData[index] = feeChargerERC20TokenWallet
-			err = model.WalletDAO.UpdateERC20WalletData(db, feeChargerERC20TokenWallet)
-			if err != nil {
-				return model.Wallet{}, err
-			}
+		index, feeChargerERC20TokenWallet := getUserERC20TokenWallet(feeChargerWallet.ERC20TokenData, fee.Token)
+		feeChargerERC20TokenWallet.Balance += fee.Value
+		feeChargerERC20TokenWallet.TotalFee += fee.Value
+		feeChargerWallet.ERC20TokenData[index] = feeChargerERC20TokenWallet
+		err = model.WalletDAO.UpdateERC20WalletData(db, feeChargerERC20TokenWallet)
+		if err != nil {
+			return model.Wallet{}, err
 		}
 	}
+
 	return userWallet, nil
 }
 

@@ -1,6 +1,7 @@
 package utils
 
 import (
+	"fmt"
 	"math/big"
 	"strconv"
 	"strings"
@@ -14,16 +15,12 @@ func CovertUIntArrayToUInt64Array(arr []uint) []uint64 {
 	return result
 }
 
-func ConvertUintArrayToString(arr []uint) string {
-	var result = ""
-	for i := 0; i < len(arr); i++ {
-		if i == len(arr)-1 {
-			result += strconv.Itoa(int(arr[i]))
-		} else {
-			result += strconv.Itoa(int(arr[i])) + ","
-		}
+func ConvertUintArrayToString(arr []uint, symbol string) string {
+	var temp = make([]string, len(arr))
+	for k, v := range arr {
+		temp[k] = fmt.Sprintf("%d", v)
 	}
-	return result
+	return strings.Join(temp, symbol)
 }
 
 func ConvertStringToUIntArray(str string) []uint {

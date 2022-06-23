@@ -21,10 +21,10 @@ func main() {
 	}
 	client := pb.NewNecoWalletCenterClient(conn)
 	reply, err := client.UpdateUserWallet(ctx, &pb.UpdateUserWalletRequest{
-		AccountId:      11,
+		AccountId:      12,
 		GameClient:     pb.GameClient_NecoFishing,
 		BusinessModule: "Update",
-		AssetType:      pb.AssetType_ERC20AssetType,
+		AssetType:      pb.AssetType_ERC1155AssetType,
 		ActionType:     pb.WalletActionType_Deposit,
 		ERC20TokenData: []*pb.ERC20TokenWallet{
 			&pb.ERC20TokenWallet{
@@ -39,18 +39,18 @@ func main() {
 			},
 		},
 		ERC1155TokenData: &pb.ERC1155TokenWallet{
-			Ids:    []uint64{10001},
-			Values: []uint64{1},
+			Ids:    []uint64{10001, 10002},
+			Values: []uint64{1, 2},
 		},
 		FeeData: []*pb.ERC20TokenWallet{
 			&pb.ERC20TokenWallet{
 				Token:   pb.ERC20Token_NFISH,
-				Balance: 1,
+				Balance: 0,
 				Decimal: 18,
 			},
 			&pb.ERC20TokenWallet{
 				Token:   pb.ERC20Token_BUSD,
-				Balance: 1,
+				Balance: 0,
 				Decimal: 18,
 			},
 		},
