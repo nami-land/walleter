@@ -21,7 +21,7 @@ func (item *ERC20TokenCollection) Scan(input interface{}) error {
 }
 
 type ERC20TokenData struct {
-	TokenType string  `json:"token_type"`
+	TokenType string  `json:"token_type" gorm:"type:varchar(20)"`
 	Amount    float64 `json:"amount"`
 	Decimal   uint    `json:"decimal"`
 }
@@ -60,10 +60,10 @@ type ERC1155WalletLog struct {
 	AccountId      uint                 `json:"account_id"` //往家账户的ID
 	BusinessModule string               `json:"business_module" gorm:"type:varchar(64);not null;comment:'业务模块'"`
 	ActionType     string               `json:"action_type" gorm:"type:varchar(64);not null;comment:'操作类型'"`
-	Ids            string               `json:"ids;comment:'变更的NFT IDs'"`
+	Ids            string               `json:"ids"`
 	Values         string               `json:"values"`                 // 变更的NFT数量
 	Fees           ERC20TokenCollection `json:"fees" gorm:"type:json;"` // 手续费
-	Status         string               `json:"status" gorm:"type:varchar(64);not null;comment:处理状态"`
+	Status         string               `json:"status" gorm:"type:varchar(10);not null;comment:处理状态"`
 	OriginalWallet Wallet               `json:"original_wallet" gorm:"type:json;not null;comment:'变更前的钱包数据'"`
 	SettledWallet  Wallet               `json:"settled_wallet" gorm:"type:json;comment:'变更后的钱包数据'"`
 }
