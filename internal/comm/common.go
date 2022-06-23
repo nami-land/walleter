@@ -1,5 +1,13 @@
 package comm
 
+type AssetType int
+
+const (
+	ERC20AssetType   = 0
+	ERC1155AssetType = 1
+	Other            = 2
+)
+
 type ERC20Token int
 
 const (
@@ -18,6 +26,17 @@ func (t ERC20Token) String() string {
 	}
 }
 
+func GetERC20TokenType(name string) ERC20Token {
+	switch name {
+	case "NFISH":
+		return NFISH
+	case "BUSD":
+		return BUSD
+	default:
+		return NFISH
+	}
+}
+
 type WalletActionType int
 
 const (
@@ -26,6 +45,7 @@ const (
 	Spend      WalletActionType = 2
 	Deposit    WalletActionType = 3
 	Withdraw   WalletActionType = 4
+	ChargeFee  WalletActionType = 5
 )
 
 func (t WalletActionType) String() string {
@@ -33,15 +53,17 @@ func (t WalletActionType) String() string {
 	case Initialize:
 		return "Initialize"
 	case Income:
-		return "Income"
+		return "TotalIncome"
 	case Spend:
 		return "Spend"
 	case Deposit:
 		return "Deposit"
 	case Withdraw:
 		return "Withdraw"
+	case ChargeFee:
+		return "ChargeFee"
 	default:
-		return "Income"
+		return "TotalIncome"
 	}
 }
 
@@ -50,6 +72,13 @@ type GameClient int
 const (
 	NecoFishing = 0
 )
+
+func (c GameClient) IsSupport() bool {
+	if c == NecoFishing {
+		return true
+	}
+	return false
+}
 
 type WalletLogStatus int
 

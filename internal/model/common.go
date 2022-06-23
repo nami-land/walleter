@@ -30,7 +30,7 @@ func InitDB(config *utils.Config) (*gorm.DB, error) {
 	return db, nil
 }
 
-func getDb(ctx context.Context) *gorm.DB {
+func GetDb(ctx context.Context) *gorm.DB {
 	return db.WithContext(ctx)
 }
 
