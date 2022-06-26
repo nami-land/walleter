@@ -12,10 +12,9 @@ import (
 )
 
 type WalletCommand struct {
-	GameClient     comm.GameClient //game client, like Neco Fishing, Neco Land..etc.
-	AccountId      uint            // User account id. unique
-	PublicAddress  string          // public address, allowed to be null
-	AssetType      comm.AssetType  // 0: ERC20 token, 1: erc1155 token.
+	AccountId      uint           // User account id. unique
+	PublicAddress  string         // public address, allowed to be null
+	AssetType      comm.AssetType // 0: ERC20 token, 1: erc1155 token.
 	ERC20Commands  []ERC20Command
 	ERC1155Command ERC1155Command
 	BusinessModule string
@@ -38,9 +37,21 @@ type walletCenter struct {
 	db *gorm.DB
 }
 
+var feeChargerAccount *OfficialAccount
+
 func New(db *gorm.DB, feeCharger OfficialAccount) *walletCenter {
 	migration(db)
+	feeChargerAccount = &feeCharger
 	return &walletCenter{db: db}
+}
+
+func (s *walletCenter) InitFeeChargerAccount() (model.Wallet, error) {
+	if feeChargerAccount == nil {
+		panic("Please assign official fee charge account.")
+	}
+
+	command := buildInitializedCommandFromAccount(*feeChargerAccount)
+	return s.HandleWalletCommand(s.db, command)
 }
 
 func migration(db *gorm.DB) {
@@ -58,10 +69,6 @@ func init() {
 }
 
 func (s *walletCenter) HandleWalletCommand(db *gorm.DB, command WalletCommand) (model.Wallet, error) {
-	if !command.GameClient.IsSupport() {
-		return model.Wallet{}, errors.New("game client is invalid")
-	}
-
 	switch command.ActionType {
 	case comm.Initialize:
 		return initWallet(db, command)
@@ -88,7 +95,6 @@ func initWallet(db *gorm.DB, command WalletCommand) (model.Wallet, error) {
 		erc20DataArray := pkg.ParseCommandToERC20WalletArray(command)
 		erc1155Data := pkg.ParseCommandToERC1155Wallet(command)
 		wallet := model.Wallet{
-			GameClient:       int(command.GameClient),
 			AccountId:        command.AccountId,
 			PublicAddress:    command.PublicAddress,
 			ERC20TokenData:   erc20DataArray,
@@ -124,7 +130,7 @@ func initWallet(db *gorm.DB, command WalletCommand) (model.Wallet, error) {
 	if err != nil {
 		return model.Wallet{}, err
 	}
-	return model.WalletDAO.GetWallet(db, command.GameClient, command.AccountId)
+	return model.WalletDAO.GetWallet(db, command.AccountId)
 }
 
 func updateWallet(db *gorm.DB, command WalletCommand) (model.Wallet, error) {
@@ -143,7 +149,7 @@ func handleERC20Command(db *gorm.DB, command WalletCommand) (model.Wallet, error
 		logService := newWalletLogService()
 		validator := pkg.NewWalletValidator()
 
-		userWallet, err := model.WalletDAO.GetWallet(db, command.GameClient, command.AccountId)
+		userWallet, err := model.WalletDAO.GetWallet(db, command.AccountId)
 		if err != nil {
 			return err
 		}
@@ -254,7 +260,7 @@ func handleERC20Command(db *gorm.DB, command WalletCommand) (model.Wallet, error
 	if err != nil {
 		return model.Wallet{}, err
 	}
-	return model.WalletDAO.GetWallet(db, command.GameClient, command.AccountId)
+	return model.WalletDAO.GetWallet(db, command.AccountId)
 }
 
 func handleERC1155Command(db *gorm.DB, command WalletCommand) (model.Wallet, error) {
@@ -262,7 +268,7 @@ func handleERC1155Command(db *gorm.DB, command WalletCommand) (model.Wallet, err
 		logService := newWalletLogService()
 		validator := pkg.NewWalletValidator()
 
-		userWallet, err := model.WalletDAO.GetWallet(db, command.GameClient, command.AccountId)
+		userWallet, err := model.WalletDAO.GetWallet(db, command.AccountId)
 		if err != nil {
 			return err
 		}
@@ -355,7 +361,7 @@ func handleERC1155Command(db *gorm.DB, command WalletCommand) (model.Wallet, err
 	if err != nil {
 		return model.Wallet{}, err
 	}
-	return model.WalletDAO.GetWallet(db, command.GameClient, command.AccountId)
+	return model.WalletDAO.GetWallet(db, command.AccountId)
 }
 
 type feeChargerService struct{}
@@ -365,9 +371,7 @@ func newFeeChargerService() *feeChargerService {
 }
 
 func (*feeChargerService) chargeFee(db *gorm.DB, command WalletCommand, userWallet model.Wallet) (model.Wallet, error) {
-	feeChargerWallet, err := model.WalletDAO.GetWallet(
-		db, command.GameClient, GetFeeChargerAccount(command.GameClient).AccountId,
-	)
+	feeChargerWallet, err := model.WalletDAO.GetWallet(db, feeChargerAccount.AccountId)
 	if err != nil {
 		return userWallet, err
 	}
@@ -457,35 +461,25 @@ var necoFishingFeeChargerAccount = OfficialAccount{
 	PublicAddress: "0xa98Ff091a5F6975162AEa4E3862165bCf81aB4Ad",
 }
 
-func GetFeeChargerAccount(gameClient comm.GameClient) OfficialAccount {
-	if gameClient == comm.NecoFishing {
-		return necoFishingFeeChargerAccount
-	}
-	return necoFishingFeeChargerAccount
-}
-
-var initNecoFishingFeeChargerAccountCommand = WalletCommand{
-	GameClient:    comm.NecoFishing,
-	AccountId:     GetFeeChargerAccount(comm.NecoFishing).AccountId,
-	PublicAddress: GetFeeChargerAccount(comm.NecoFishing).PublicAddress,
-	AssetType:     comm.Other,
-	ERC20Commands: []ERC20Command{
-		{
-			Token:   comm.NFISH,
-			Value:   0,
-			Decimal: 18,
-		}, {
-			Token:   comm.BUSD,
-			Value:   0,
-			Decimal: 18,
+func buildInitializedCommandFromAccount(account OfficialAccount) WalletCommand {
+	return WalletCommand{
+		AccountId:     feeChargerAccount.AccountId,
+		PublicAddress: feeChargerAccount.PublicAddress,
+		AssetType:     comm.Other,
+		ERC20Commands: []ERC20Command{
+			{
+				Token:   comm.NFISH,
+				Value:   0,
+				Decimal: 18,
+			}, {
+				Token:   comm.BUSD,
+				Value:   0,
+				Decimal: 18,
+			},
 		},
-	},
-	ERC1155Command: ERC1155Command{},
-	BusinessModule: "Initialization",
-	ActionType:     comm.Initialize,
-	FeeCommands:    []ERC20Command{},
-}
-
-var InitializedCommands = []WalletCommand{
-	initNecoFishingFeeChargerAccountCommand,
+		ERC1155Command: ERC1155Command{},
+		BusinessModule: "Initialization",
+		ActionType:     comm.Initialize,
+		FeeCommands:    []ERC20Command{},
+	}
 }

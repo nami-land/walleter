@@ -32,7 +32,6 @@ func (receiver walletValidator) GenerateNewSignHash(wallet model.Wallet) (string
 	for _, token := range wallet.ERC20TokenData {
 		erc20Data := model.ERC20TokenWallet{
 			Model:         gorm.Model{},
-			GameClient:    token.GameClient,
 			AccountId:     token.AccountId,
 			Token:         token.Token,
 			Balance:       token.Balance,
@@ -47,16 +46,14 @@ func (receiver walletValidator) GenerateNewSignHash(wallet model.Wallet) (string
 	}
 
 	erc1155Data := model.ERC1155TokenWallet{
-		Model:      gorm.Model{},
-		GameClient: wallet.ERC1155TokenData.GameClient,
-		AccountId:  wallet.ERC1155TokenData.AccountId,
-		Ids:        wallet.ERC1155TokenData.Ids,
-		Values:     wallet.ERC1155TokenData.Values,
+		Model:     gorm.Model{},
+		AccountId: wallet.ERC1155TokenData.AccountId,
+		Ids:       wallet.ERC1155TokenData.Ids,
+		Values:    wallet.ERC1155TokenData.Values,
 	}
 
 	tempWallet := model.Wallet{
 		Model:            gorm.Model{},
-		GameClient:       wallet.GameClient,
 		AccountId:        wallet.AccountId,
 		PublicAddress:    wallet.PublicAddress,
 		ERC20TokenData:   newERC20TokenData,

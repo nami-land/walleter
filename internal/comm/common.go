@@ -67,19 +67,6 @@ func (t WalletActionType) String() string {
 	}
 }
 
-type GameClient int
-
-const (
-	NecoFishing = 0
-)
-
-func (c GameClient) IsSupport() bool {
-	if c == NecoFishing {
-		return true
-	}
-	return false
-}
-
 type WalletLogStatus int
 
 const (
