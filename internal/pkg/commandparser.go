@@ -1,10 +1,10 @@
 package pkg
 
 import (
+	"github.com/neco-fun/wallet-center/internal/comm"
+	"github.com/neco-fun/wallet-center/internal/model"
+	"github.com/neco-fun/wallet-center/internal/utils"
 	"gorm.io/gorm"
-	"neco-wallet-center/internal/comm"
-	"neco-wallet-center/internal/model"
-	"neco-wallet-center/internal/utils"
 )
 
 func ParseCommandToERC20WalletArray(command model.WalletCommand) []model.ERC20TokenWallet {

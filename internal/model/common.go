@@ -4,10 +4,10 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"github.com/neco-fun/wallet-center/internal/utils"
 	"gorm.io/driver/mysql"
 	"gorm.io/gorm"
 	"gorm.io/gorm/logger"
-	"neco-wallet-center/internal/utils"
 )
 
 var db *gorm.DB

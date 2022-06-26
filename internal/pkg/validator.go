@@ -5,8 +5,8 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"github.com/neco-fun/wallet-center/internal/model"
 	"gorm.io/gorm"
-	"neco-wallet-center/internal/model"
 )
 
 type walletValidator struct{}

@@ -5,7 +5,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
-	"neco-wallet-center/internal/comm"
+	"github.com/neco-fun/wallet-center/internal/comm"
 
 	"github.com/go-sql-driver/mysql"
 	"gorm.io/gorm"
