@@ -38,7 +38,7 @@ type walletCenter struct {
 	db *gorm.DB
 }
 
-func New(db *gorm.DB) *walletCenter {
+func New(db *gorm.DB, feeCharger OfficialAccount) *walletCenter {
 	migration(db)
 	return &walletCenter{db: db}
 }
@@ -462,4 +462,30 @@ func GetFeeChargerAccount(gameClient comm.GameClient) OfficialAccount {
 		return necoFishingFeeChargerAccount
 	}
 	return necoFishingFeeChargerAccount
+}
+
+var initNecoFishingFeeChargerAccountCommand = WalletCommand{
+	GameClient:    comm.NecoFishing,
+	AccountId:     GetFeeChargerAccount(comm.NecoFishing).AccountId,
+	PublicAddress: GetFeeChargerAccount(comm.NecoFishing).PublicAddress,
+	AssetType:     comm.Other,
+	ERC20Commands: []ERC20Command{
+		{
+			Token:   comm.NFISH,
+			Value:   0,
+			Decimal: 18,
+		}, {
+			Token:   comm.BUSD,
+			Value:   0,
+			Decimal: 18,
+		},
+	},
+	ERC1155Command: ERC1155Command{},
+	BusinessModule: "Initialization",
+	ActionType:     comm.Initialize,
+	FeeCommands:    []ERC20Command{},
+}
+
+var InitializedCommands = []WalletCommand{
+	initNecoFishingFeeChargerAccountCommand,
 }
