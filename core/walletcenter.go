@@ -2,13 +2,13 @@ package core
 
 import (
 	"errors"
+	"os"
+
 	"github.com/neco-fun/wallet-center/internal/comm"
 	"github.com/neco-fun/wallet-center/internal/model"
-	"github.com/neco-fun/wallet-center/internal/pkg"
 	"github.com/neco-fun/wallet-center/internal/utils"
 	log "github.com/sirupsen/logrus"
 	"gorm.io/gorm"
-	"os"
 )
 
 type WalletCommand struct {
@@ -81,19 +81,19 @@ func initWallet(db *gorm.DB, command WalletCommand) (model.Wallet, error) {
 	err := db.Transaction(func(tx1 *gorm.DB) error {
 		// 1. Insert change logs, including ERC20 logs and ERC1155 Log.
 		walletLogService := newWalletLogService()
-		erc20WalletLog, err := walletLogService.InsertNewERC20WalletLog(tx1, command, model.Wallet{})
+		erc20WalletLog, err := walletLogService.insertNewERC20WalletLog(tx1, command, model.Wallet{})
 		if err != nil {
 			return err
 		}
 
-		erc115WalletLog, err := walletLogService.InsertNewERC1155WalletLog(tx1, command, model.Wallet{})
+		erc115WalletLog, err := walletLogService.insertNewERC1155WalletLog(tx1, command, model.Wallet{})
 		if err != nil {
 			return err
 		}
 
 		// 2. initialize user's wallet data.
-		erc20DataArray := pkg.ParseCommandToERC20WalletArray(command)
-		erc1155Data := pkg.ParseCommandToERC1155Wallet(command)
+		erc20DataArray := parseCommandToERC20WalletArray(command)
+		erc1155Data := parseCommandToERC1155Wallet(command)
 		wallet := model.Wallet{
 			AccountId:        command.AccountId,
 			PublicAddress:    command.PublicAddress,
@@ -103,7 +103,7 @@ func initWallet(db *gorm.DB, command WalletCommand) (model.Wallet, error) {
 		}
 
 		// 3. generator a new check sign
-		newCheckSign, err := pkg.NewWalletValidator().GenerateNewSignHash(wallet)
+		newCheckSign, err := newWalletValidator().generateNewSignHash(wallet)
 		if err != nil {
 			return err
 		}
@@ -115,12 +115,12 @@ func initWallet(db *gorm.DB, command WalletCommand) (model.Wallet, error) {
 		}
 
 		// 4. change log statuses
-		_, err = walletLogService.UpdateERC20WalletLog(tx1, erc20WalletLog, comm.Done, wallet)
+		_, err = walletLogService.updateERC20WalletLog(tx1, erc20WalletLog, comm.Done, wallet)
 		if err != nil {
 			return err
 		}
 
-		_, err = walletLogService.UpdateERC1155WalletLog(tx1, erc115WalletLog, comm.Done, wallet)
+		_, err = walletLogService.updateERC1155WalletLog(tx1, erc115WalletLog, comm.Done, wallet)
 		if err != nil {
 			return err
 		}
@@ -147,7 +147,7 @@ func updateWallet(db *gorm.DB, command WalletCommand) (model.Wallet, error) {
 func handleERC20Command(db *gorm.DB, command WalletCommand) (model.Wallet, error) {
 	err := db.Transaction(func(tx *gorm.DB) error {
 		logService := newWalletLogService()
-		validator := pkg.NewWalletValidator()
+		validator := newWalletValidator()
 
 		userWallet, err := model.WalletDAO.GetWallet(db, command.AccountId)
 		if err != nil {
@@ -155,13 +155,13 @@ func handleERC20Command(db *gorm.DB, command WalletCommand) (model.Wallet, error
 		}
 
 		// 1. Verify that the user's current wallet status is normal
-		result, err := validator.ValidateWallet(userWallet)
+		result, err := validator.validateWallet(userWallet)
 		if err != nil || result == false {
 			return err
 		}
 
 		// 2.Insert a log message
-		erc20Log, err := logService.InsertNewERC20WalletLog(tx, command, userWallet)
+		erc20Log, err := logService.insertNewERC20WalletLog(tx, command, userWallet)
 		if err != nil {
 			return err
 		}
@@ -169,7 +169,7 @@ func handleERC20Command(db *gorm.DB, command WalletCommand) (model.Wallet, error
 		// 3. Whether to charge a fee
 		userWallet, err = newFeeChargerService().chargeFee(tx, command, userWallet)
 		if err != nil {
-			_, err = logService.UpdateERC20WalletLog(tx, erc20Log, comm.Failed, userWallet)
+			_, err = logService.updateERC20WalletLog(tx, erc20Log, comm.Failed, userWallet)
 			return err
 		}
 
@@ -240,7 +240,7 @@ func handleERC20Command(db *gorm.DB, command WalletCommand) (model.Wallet, error
 		}
 
 		// 6. Generate new verification information
-		newCheckSign, err := validator.GenerateNewSignHash(userWallet)
+		newCheckSign, err := validator.generateNewSignHash(userWallet)
 		if err != nil {
 			return err
 		}
@@ -251,7 +251,7 @@ func handleERC20Command(db *gorm.DB, command WalletCommand) (model.Wallet, error
 		}
 
 		// 8. Update log information
-		_, err = newWalletLogService().UpdateERC20WalletLog(tx, erc20Log, comm.Done, userWallet)
+		_, err = newWalletLogService().updateERC20WalletLog(tx, erc20Log, comm.Done, userWallet)
 		if err != nil {
 			return err
 		}
@@ -266,7 +266,7 @@ func handleERC20Command(db *gorm.DB, command WalletCommand) (model.Wallet, error
 func handleERC1155Command(db *gorm.DB, command WalletCommand) (model.Wallet, error) {
 	err := db.Transaction(func(tx *gorm.DB) error {
 		logService := newWalletLogService()
-		validator := pkg.NewWalletValidator()
+		validator := newWalletValidator()
 
 		userWallet, err := model.WalletDAO.GetWallet(db, command.AccountId)
 		if err != nil {
@@ -274,13 +274,13 @@ func handleERC1155Command(db *gorm.DB, command WalletCommand) (model.Wallet, err
 		}
 
 		// 1. Verify that the user's current wallet status is normal
-		result, err := validator.ValidateWallet(userWallet)
+		result, err := validator.validateWallet(userWallet)
 		if err != nil || !result {
 			return err
 		}
 
 		// 2.Insert a log message
-		erc1155Log, err := logService.InsertNewERC1155WalletLog(tx, command, userWallet)
+		erc1155Log, err := logService.insertNewERC1155WalletLog(tx, command, userWallet)
 		if err != nil {
 			return err
 		}
@@ -288,7 +288,7 @@ func handleERC1155Command(db *gorm.DB, command WalletCommand) (model.Wallet, err
 		// 3. Whether to charge a fee
 		userWallet, err = newFeeChargerService().chargeFee(tx, command, userWallet)
 		if err != nil {
-			_, err = logService.UpdateERC1155WalletLog(tx, erc1155Log, comm.Failed, userWallet)
+			_, err = logService.updateERC1155WalletLog(tx, erc1155Log, comm.Failed, userWallet)
 			return err
 		}
 
@@ -341,7 +341,7 @@ func handleERC1155Command(db *gorm.DB, command WalletCommand) (model.Wallet, err
 		}
 
 		// 6. Generate new verification information
-		newCheckSign, err := validator.GenerateNewSignHash(userWallet)
+		newCheckSign, err := validator.generateNewSignHash(userWallet)
 		if err != nil {
 			return err
 		}
@@ -352,7 +352,7 @@ func handleERC1155Command(db *gorm.DB, command WalletCommand) (model.Wallet, err
 		}
 
 		// 8. Update log information
-		_, err = newWalletLogService().UpdateERC1155WalletLog(tx, erc1155Log, comm.Done, userWallet)
+		_, err = newWalletLogService().updateERC1155WalletLog(tx, erc1155Log, comm.Done, userWallet)
 		if err != nil {
 			return err
 		}
@@ -417,16 +417,16 @@ func newWalletLogService() *walletLogService {
 	return &walletLogService{}
 }
 
-// InsertNewERC20WalletLog Insert new log of ERC20 changes
-func (receiver *walletLogService) InsertNewERC20WalletLog(
+// insertNewERC20WalletLog Insert new log of ERC20 changes
+func (receiver *walletLogService) insertNewERC20WalletLog(
 	db *gorm.DB, command WalletCommand, currentWallet model.Wallet,
 ) (model.ERC20WalletLog, error) {
-	erc20WalletLog := pkg.ParseCommandToERC20WalletLog(command, currentWallet)
+	erc20WalletLog := parseCommandToERC20WalletLog(command, currentWallet)
 	return model.ERC20WalletLogDAO.InsertERC20WalletLog(db, erc20WalletLog)
 }
 
-// UpdateERC20WalletLog Change the status of ERC20Log in batches
-func (receiver *walletLogService) UpdateERC20WalletLog(
+// updateERC20WalletLog Change the status of ERC20Log in batches
+func (receiver *walletLogService) updateERC20WalletLog(
 	db *gorm.DB, log model.ERC20WalletLog, status comm.WalletLogStatus, newWallet model.Wallet,
 ) (model.ERC20WalletLog, error) {
 	log.Status = status.String()
@@ -434,16 +434,16 @@ func (receiver *walletLogService) UpdateERC20WalletLog(
 	return model.ERC20WalletLogDAO.UpdateERC20WalletLogStatus(db, log)
 }
 
-// InsertNewERC1155WalletLog Insert an ERC1155 asset change log
-func (receiver *walletLogService) InsertNewERC1155WalletLog(
+// insertNewERC1155WalletLog Insert an ERC1155 asset change log
+func (receiver *walletLogService) insertNewERC1155WalletLog(
 	db *gorm.DB, command WalletCommand, currentWallet model.Wallet,
 ) (model.ERC1155WalletLog, error) {
-	erc1155WalletData := pkg.ParseCommandToERC1155WalletLog(command, currentWallet)
+	erc1155WalletData := parseCommandToERC1155WalletLog(command, currentWallet)
 	return model.ERC1155WalletLogDAO.InsertERC1155WalletLog(db, erc1155WalletData)
 }
 
-// UpdateERC1155WalletLog Change the state of the ERC1155 log
-func (receiver *walletLogService) UpdateERC1155WalletLog(
+// updateERC1155WalletLog Change the state of the ERC1155 log
+func (receiver *walletLogService) updateERC1155WalletLog(
 	db *gorm.DB, log model.ERC1155WalletLog, status comm.WalletLogStatus, newWallet model.Wallet,
 ) (model.ERC1155WalletLog, error) {
 	log.Status = status.String()

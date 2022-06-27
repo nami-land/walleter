@@ -1,14 +1,13 @@
-package pkg
+package core
 
 import (
-	"github.com/neco-fun/wallet-center/core"
 	"github.com/neco-fun/wallet-center/internal/comm"
 	"github.com/neco-fun/wallet-center/internal/model"
 	"github.com/neco-fun/wallet-center/internal/utils"
 	"gorm.io/gorm"
 )
 
-func ParseCommandToERC20WalletArray(command core.WalletCommand) []model.ERC20TokenWallet {
+func parseCommandToERC20WalletArray(command WalletCommand) []model.ERC20TokenWallet {
 	var result []model.ERC20TokenWallet
 	for _, item := range command.ERC20Commands {
 		data := model.ERC20TokenWallet{
@@ -22,7 +21,7 @@ func ParseCommandToERC20WalletArray(command core.WalletCommand) []model.ERC20Tok
 	return result
 }
 
-func ParseCommandToERC1155Wallet(command core.WalletCommand) model.ERC1155TokenWallet {
+func parseCommandToERC1155Wallet(command WalletCommand) model.ERC1155TokenWallet {
 	return model.ERC1155TokenWallet{
 		Model:     gorm.Model{},
 		AccountId: command.AccountId,
@@ -31,9 +30,9 @@ func ParseCommandToERC1155Wallet(command core.WalletCommand) model.ERC1155TokenW
 	}
 }
 
-func ParseCommandToERC20WalletLog(command core.WalletCommand, wallet model.Wallet) model.ERC20WalletLog {
-	fees := ParseERC20Commands(command.FeeCommands)
-	gonnaChangedTokens := ParseERC20Commands(command.ERC20Commands)
+func parseCommandToERC20WalletLog(command WalletCommand, wallet model.Wallet) model.ERC20WalletLog {
+	fees := parseERC20Commands(command.FeeCommands)
+	gonnaChangedTokens := parseERC20Commands(command.ERC20Commands)
 
 	return model.ERC20WalletLog{
 		Model:          gorm.Model{},
@@ -48,8 +47,8 @@ func ParseCommandToERC20WalletLog(command core.WalletCommand, wallet model.Walle
 	}
 }
 
-func ParseCommandToERC1155WalletLog(command core.WalletCommand, wallet model.Wallet) model.ERC1155WalletLog {
-	fees := ParseERC20Commands(command.FeeCommands)
+func parseCommandToERC1155WalletLog(command WalletCommand, wallet model.Wallet) model.ERC1155WalletLog {
+	fees := parseERC20Commands(command.FeeCommands)
 
 	return model.ERC1155WalletLog{
 		Model:          gorm.Model{},
@@ -65,7 +64,7 @@ func ParseCommandToERC1155WalletLog(command core.WalletCommand, wallet model.Wal
 	}
 }
 
-func ParseERC20Commands(commands []core.ERC20Command) []model.ERC20TokenData {
+func parseERC20Commands(commands []ERC20Command) []model.ERC20TokenData {
 	var result []model.ERC20TokenData
 	for _, data := range commands {
 		tokenData := model.ERC20TokenData{

@@ -1,23 +1,24 @@
-package pkg
+package core
 
 import (
 	"crypto/md5"
 	"encoding/json"
 	"errors"
 	"fmt"
+
 	"github.com/neco-fun/wallet-center/internal/model"
 	"gorm.io/gorm"
 )
 
 type walletValidator struct{}
 
-func NewWalletValidator() *walletValidator {
+func newWalletValidator() *walletValidator {
 	return &walletValidator{}
 }
 
-func (receiver walletValidator) ValidateWallet(wallet model.Wallet) (bool, error) {
+func (receiver walletValidator) validateWallet(wallet model.Wallet) (bool, error) {
 	checkSign := wallet.CheckSign
-	md5Value, err := receiver.GenerateNewSignHash(wallet)
+	md5Value, err := receiver.generateNewSignHash(wallet)
 	if err != nil {
 		return false, err
 	}
@@ -27,7 +28,7 @@ func (receiver walletValidator) ValidateWallet(wallet model.Wallet) (bool, error
 	return true, nil
 }
 
-func (receiver walletValidator) GenerateNewSignHash(wallet model.Wallet) (string, error) {
+func (receiver walletValidator) generateNewSignHash(wallet model.Wallet) (string, error) {
 	var newERC20TokenData []model.ERC20TokenWallet
 	for _, token := range wallet.ERC20TokenData {
 		erc20Data := model.ERC20TokenWallet{
