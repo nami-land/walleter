@@ -55,11 +55,11 @@ func (s *WalletCenter) InitFeeChargerAccount() (model.Wallet, error) {
 }
 
 func migration(db *gorm.DB) {
-	_ = db.Table("t_erc20_token_data").AutoMigrate(model.ERC20TokenWallet{})
-	_ = db.Table("t_erc1155_token_data").AutoMigrate(model.ERC1155TokenWallet{})
-	_ = db.Table("t_wallet").AutoMigrate(model.Wallet{})
-	_ = db.Table("t_erc20_wallet_log").AutoMigrate(model.ERC20WalletLog{})
-	_ = db.Table("t_erc1155_wallet_log").AutoMigrate(model.ERC1155WalletLog{})
+	_ = db.AutoMigrate(model.ERC20TokenWallet{})
+	_ = db.AutoMigrate(model.ERC1155TokenWallet{})
+	_ = db.AutoMigrate(model.Wallet{})
+	_ = db.AutoMigrate(model.ERC20WalletLog{})
+	_ = db.AutoMigrate(model.ERC1155WalletLog{})
 }
 
 func init() {
