@@ -10,7 +10,6 @@ import (
 
 type WalletCommand struct {
 	AccountId      uint64    // User account id. unique
-	PublicAddress  string    // public address, allowed to be null
 	AssetType      AssetType // 0: ERC20 token, 1: erc1155 token.
 	ERC20Commands  []ERC20Command
 	ERC1155Command ERC1155Command
@@ -459,9 +458,8 @@ var necoFishingFeeChargerAccount = OfficialAccount{
 
 func buildInitializedCommandFromAccount(account OfficialAccount) WalletCommand {
 	return WalletCommand{
-		AccountId:     feeChargerAccount.AccountId,
-		PublicAddress: feeChargerAccount.PublicAddress,
-		AssetType:     Other,
+		AccountId: account.AccountId,
+		AssetType: Other,
 		ERC20Commands: []ERC20Command{
 			{
 				Token:   NFISH,
