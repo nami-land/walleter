@@ -33,19 +33,19 @@ type ERC1155Command struct {
 	Values []uint
 }
 
-type walletCenter struct {
+type WalletCenter struct {
 	db *gorm.DB
 }
 
 var feeChargerAccount *OfficialAccount
 
-func New(db *gorm.DB, feeCharger OfficialAccount) *walletCenter {
+func New(db *gorm.DB, feeCharger OfficialAccount) *WalletCenter {
 	migration(db)
 	feeChargerAccount = &feeCharger
-	return &walletCenter{db: db}
+	return &WalletCenter{db: db}
 }
 
-func (s *walletCenter) InitFeeChargerAccount() (model.Wallet, error) {
+func (s *WalletCenter) InitFeeChargerAccount() (model.Wallet, error) {
 	if feeChargerAccount == nil {
 		panic("Please assign official fee charge account.")
 	}
@@ -68,7 +68,7 @@ func init() {
 	log.SetOutput(os.Stdout)
 }
 
-func (s *walletCenter) HandleWalletCommand(db *gorm.DB, command WalletCommand) (model.Wallet, error) {
+func (s *WalletCenter) HandleWalletCommand(db *gorm.DB, command WalletCommand) (model.Wallet, error) {
 	switch command.ActionType {
 	case comm.Initialize:
 		return initWallet(db, command)
