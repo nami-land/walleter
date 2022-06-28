@@ -1,4 +1,4 @@
-package comm
+package wallet_center
 
 type AssetType int
 

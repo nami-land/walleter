@@ -1,4 +1,4 @@
-package utils
+package wallet_center
 
 import (
 	"fmt"
@@ -7,7 +7,7 @@ import (
 	"strings"
 )
 
-func CovertUIntArrayToUInt64Array(arr []uint) []uint64 {
+func covertUIntArrayToUInt64Array(arr []uint) []uint64 {
 	var result []uint64
 	for _, item := range arr {
 		result = append(result, uint64(item))
@@ -15,7 +15,7 @@ func CovertUIntArrayToUInt64Array(arr []uint) []uint64 {
 	return result
 }
 
-func ConvertUintArrayToString(arr []uint, symbol string) string {
+func convertUintArrayToString(arr []uint, symbol string) string {
 	var temp = make([]string, len(arr))
 	for k, v := range arr {
 		temp[k] = fmt.Sprintf("%d", v)
@@ -23,7 +23,7 @@ func ConvertUintArrayToString(arr []uint, symbol string) string {
 	return strings.Join(temp, symbol)
 }
 
-func ConvertStringToUIntArray(str string) []uint {
+func convertStringToUIntArray(str string) []uint {
 	var result []uint
 	strArray := strings.Split(str, ",")
 	for _, item := range strArray {
@@ -36,7 +36,7 @@ func ConvertStringToUIntArray(str string) []uint {
 	return result
 }
 
-func ConvertIntArrayToBigIntArray(arr []int32) []*big.Int {
+func convertIntArrayToBigIntArray(arr []int32) []*big.Int {
 	var result []*big.Int
 	for _, item := range arr {
 		result = append(result, big.NewInt(int64(item)))
@@ -44,7 +44,7 @@ func ConvertIntArrayToBigIntArray(arr []int32) []*big.Int {
 	return result
 }
 
-func ConvertUInt64ArrayToUIntArray(arr []uint64) []uint {
+func convertUInt64ArrayToUIntArray(arr []uint64) []uint {
 	var result []uint
 	for _, item := range arr {
 		result = append(result, uint(item))
@@ -52,7 +52,7 @@ func ConvertUInt64ArrayToUIntArray(arr []uint64) []uint {
 	return result
 }
 
-func GetIndexFromUIntArray(array []uint, value uint) int {
+func getIndexFromUIntArray(array []uint, value uint) int {
 	for index, num := range array {
 		if num == value {
 			return index

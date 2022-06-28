@@ -1,6 +1,0 @@
-database:
-  addr: rm-0iw319a7rl5znc5dnho.mysql.japan.rds.aliyuncs.com
-  port: 3306
-  database: neco_wallet_center_db
-  username: root
-  password: NECOFUNgames123

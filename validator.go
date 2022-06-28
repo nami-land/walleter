@@ -1,12 +1,10 @@
-package core
+package wallet_center
 
 import (
 	"crypto/md5"
 	"encoding/json"
 	"errors"
 	"fmt"
-
-	"github.com/neco-fun/wallet-center/internal/model"
 	"gorm.io/gorm"
 )
 
@@ -16,7 +14,7 @@ func newWalletValidator() *walletValidator {
 	return &walletValidator{}
 }
 
-func (receiver walletValidator) validateWallet(wallet model.Wallet) (bool, error) {
+func (receiver walletValidator) validateWallet(wallet Wallet) (bool, error) {
 	checkSign := wallet.CheckSign
 	md5Value, err := receiver.generateNewSignHash(wallet)
 	if err != nil {
@@ -28,10 +26,10 @@ func (receiver walletValidator) validateWallet(wallet model.Wallet) (bool, error
 	return true, nil
 }
 
-func (receiver walletValidator) generateNewSignHash(wallet model.Wallet) (string, error) {
-	var newERC20TokenData []model.ERC20TokenWallet
-	for _, token := range wallet.ERC20TokenData {
-		erc20Data := model.ERC20TokenWallet{
+func (receiver walletValidator) generateNewSignHash(w Wallet) (string, error) {
+	var newERC20TokenData []ERC20TokenWallet
+	for _, token := range w.ERC20TokenData {
+		erc20Data := ERC20TokenWallet{
 			Model:         gorm.Model{},
 			AccountId:     token.AccountId,
 			Token:         token.Token,
@@ -46,17 +44,16 @@ func (receiver walletValidator) generateNewSignHash(wallet model.Wallet) (string
 		newERC20TokenData = append(newERC20TokenData, erc20Data)
 	}
 
-	erc1155Data := model.ERC1155TokenWallet{
+	erc1155Data := ERC1155TokenWallet{
 		Model:     gorm.Model{},
-		AccountId: wallet.ERC1155TokenData.AccountId,
-		Ids:       wallet.ERC1155TokenData.Ids,
-		Values:    wallet.ERC1155TokenData.Values,
+		AccountId: w.ERC1155TokenData.AccountId,
+		Ids:       w.ERC1155TokenData.Ids,
+		Values:    w.ERC1155TokenData.Values,
 	}
 
-	tempWallet := model.Wallet{
+	tempWallet := Wallet{
 		Model:            gorm.Model{},
-		AccountId:        wallet.AccountId,
-		PublicAddress:    wallet.PublicAddress,
+		AccountId:        w.AccountId,
 		ERC20TokenData:   newERC20TokenData,
 		ERC1155TokenData: erc1155Data,
 		CheckSign:        "",
