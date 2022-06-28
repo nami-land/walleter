@@ -4,6 +4,7 @@ import (
 	"database/sql/driver"
 	"encoding/json"
 	"errors"
+
 	"github.com/go-sql-driver/mysql"
 	"gorm.io/gorm"
 )
@@ -73,7 +74,7 @@ func (dao walletDA0) CreateWallet(db *gorm.DB, wallet Wallet) error {
 	var mysqlErr *mysql.MySQLError
 	if err := db.Create(&wallet).Error; err != nil {
 		if errors.As(err, &mysqlErr) && mysqlErr.Number == 1062 {
-			return errors.New("record is already existed")
+			return nil
 		}
 		return err
 	}
