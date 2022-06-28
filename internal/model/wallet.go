@@ -11,7 +11,7 @@ import (
 
 type Wallet struct {
 	gorm.Model       `swagger-ignore:"true"`
-	AccountId        uint               `json:"account_id" gorm:"unique;not null"` // 玩家账户ID
+	AccountId        uint64             `json:"account_id" gorm:"unique;not null"` // 玩家账户ID
 	PublicAddress    string             `json:"address" gorm:"type:varchar(128)"`  // 玩家的钱包地址
 	ERC20TokenData   []ERC20TokenWallet `json:"erc_20_token_data" gorm:"foreignKey:AccountId;references:AccountId"`
 	ERC1155TokenData ERC1155TokenWallet `json:"erc_1155_token_data" gorm:"foreignKey:AccountId;references:AccountId"`
@@ -51,7 +51,7 @@ type walletDA0 struct{}
 
 var WalletDAO = &walletDA0{}
 
-func (dao walletDA0) GetWallet(db *gorm.DB, accountId uint) (Wallet, error) {
+func (dao walletDA0) GetWallet(db *gorm.DB, accountId uint64) (Wallet, error) {
 	var wallet Wallet
 	if err := db.
 		Preload("ERC20TokenData").

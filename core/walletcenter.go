@@ -12,7 +12,7 @@ import (
 )
 
 type WalletCommand struct {
-	AccountId      uint           // User account id. unique
+	AccountId      uint64         // User account id. unique
 	PublicAddress  string         // public address, allowed to be null
 	AssetType      comm.AssetType // 0: ERC20 token, 1: erc1155 token.
 	ERC20Commands  []ERC20Command
@@ -452,7 +452,7 @@ func (receiver *walletLogService) updateERC1155WalletLog(
 }
 
 type OfficialAccount struct {
-	AccountId     uint
+	AccountId     uint64
 	PublicAddress string
 }
 
