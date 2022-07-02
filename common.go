@@ -8,14 +8,33 @@ const (
 	Other            = 2
 )
 
-type ERC20Token int
+type ERC20Token struct {
+	Index   uint64
+	Symbol  string
+	Decimal uint
+}
+
+var supportedERC20Tokens = []ERC20Token{
+	{
+		Index:   0,
+		Symbol:  NFISH.String(),
+		Decimal: 18,
+	},
+	{
+		Index:   1,
+		Symbol:  BUSD.String(),
+		Decimal: 18,
+	},
+}
+
+type ERC20TokenEnum int
 
 const (
-	NFISH ERC20Token = 0
-	BUSD  ERC20Token = 1
+	NFISH ERC20TokenEnum = 0
+	BUSD  ERC20TokenEnum = 1
 )
 
-func (t ERC20Token) String() string {
+func (t ERC20TokenEnum) String() string {
 	switch t {
 	case NFISH:
 		return "NFISH"
@@ -26,7 +45,7 @@ func (t ERC20Token) String() string {
 	}
 }
 
-func GetERC20TokenType(name string) ERC20Token {
+func GetERC20TokenType(name string) ERC20TokenEnum {
 	switch name {
 	case "NFISH":
 		return NFISH

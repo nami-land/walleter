@@ -1,6 +1,7 @@
 package wallet_center
 
 import (
+	"context"
 	"errors"
 	"os"
 
@@ -19,7 +20,7 @@ type WalletCommand struct {
 }
 
 type ERC20Command struct {
-	Token   ERC20Token
+	Token   ERC20TokenEnum
 	Value   float64
 	Decimal uint
 }
@@ -33,21 +34,21 @@ type WalletCenter struct {
 	db *gorm.DB
 }
 
-var feeChargerAccount *OfficialAccount
+var feeChargerAccountId uint64
 
-func New(db *gorm.DB, feeCharger OfficialAccount) *WalletCenter {
+func New(db *gorm.DB, chargerAccountId uint64) *WalletCenter {
 	migration(db)
-	feeChargerAccount = &feeCharger
+	feeChargerAccountId = chargerAccountId
 	return &WalletCenter{db: db}
 }
 
-func (s *WalletCenter) InitFeeChargerAccount() (Wallet, error) {
-	if feeChargerAccount == nil {
+func (s *WalletCenter) SetFeeChargerAccount(accountId uint64) (Wallet, error) {
+	if feeChargerAccountId == 0 {
 		panic("Please assign official fee charge account.")
 	}
 
-	command := buildInitializedCommandFromAccount(*feeChargerAccount)
-	return s.HandleWalletCommand(s.db, command)
+	command := buildInitializedCommandFromAccount(feeChargerAccountId)
+	return s.HandleWalletCommand(context.Background(), command)
 }
 
 func migration(db *gorm.DB) {
@@ -64,12 +65,12 @@ func init() {
 	log.SetOutput(os.Stdout)
 }
 
-func (s *WalletCenter) HandleWalletCommand(db *gorm.DB, command WalletCommand) (Wallet, error) {
+func (s *WalletCenter) HandleWalletCommand(ctx context.Context, command WalletCommand) (Wallet, error) {
 	switch command.ActionType {
 	case Initialize:
-		return initWallet(db, command)
+		return initWallet(s.db.WithContext(ctx), command)
 	default:
-		return updateWallet(db, command)
+		return updateWallet(s.db.WithContext(ctx), command)
 	}
 }
 
@@ -366,7 +367,7 @@ func newFeeChargerService() *feeChargerService {
 }
 
 func (*feeChargerService) chargeFee(db *gorm.DB, command WalletCommand, userWallet Wallet) (Wallet, error) {
-	feeChargerWallet, err := walletDAO.getWallet(db, feeChargerAccount.AccountId)
+	feeChargerWallet, err := walletDAO.getWallet(db, feeChargerAccountId)
 	if err != nil {
 		return userWallet, err
 	}
@@ -397,7 +398,7 @@ func (*feeChargerService) chargeFee(db *gorm.DB, command WalletCommand, userWall
 	return userWallet, nil
 }
 
-func getUserERC20TokenWallet(tokens []ERC20TokenWallet, token ERC20Token) (int, ERC20TokenWallet) {
+func getUserERC20TokenWallet(tokens []ERC20TokenWallet, token ERC20TokenEnum) (int, ERC20TokenWallet) {
 	for index, item := range tokens {
 		if item.Token == token.String() {
 			return index, item
@@ -446,31 +447,20 @@ func (receiver *walletLogService) updateERC1155WalletLog(
 	return erc1155LogDAO.updateERC1155WalletLogStatus(db, log)
 }
 
-type OfficialAccount struct {
-	AccountId     uint64
-	PublicAddress string
-}
+func buildInitializedCommandFromAccount(accountId uint64) WalletCommand {
+	var erc20Commands []ERC20Command
+	for _, item := range supportedERC20Tokens {
+		erc20Commands = append(erc20Commands, ERC20Command{
+			Token:   ERC20TokenEnum(item.Index),
+			Value:   0,
+			Decimal: item.Decimal,
+		})
+	}
 
-var necoFishingFeeChargerAccount = OfficialAccount{
-	AccountId:     1,
-	PublicAddress: "0xa98Ff091a5F6975162AEa4E3862165bCf81aB4Ad",
-}
-
-func buildInitializedCommandFromAccount(account OfficialAccount) WalletCommand {
 	return WalletCommand{
-		AccountId: account.AccountId,
-		AssetType: Other,
-		ERC20Commands: []ERC20Command{
-			{
-				Token:   NFISH,
-				Value:   0,
-				Decimal: 18,
-			}, {
-				Token:   BUSD,
-				Value:   0,
-				Decimal: 18,
-			},
-		},
+		AccountId:      accountId,
+		AssetType:      Other,
+		ERC20Commands:  erc20Commands,
 		ERC1155Command: ERC1155Command{},
 		BusinessModule: "Initialization",
 		ActionType:     Initialize,
