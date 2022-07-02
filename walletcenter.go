@@ -42,7 +42,7 @@ func New(db *gorm.DB, chargerAccountId uint64) *WalletCenter {
 	return &WalletCenter{db: db}
 }
 
-func (s *WalletCenter) SetFeeChargerAccount(accountId uint64) (Wallet, error) {
+func (s *WalletCenter) SetFeeChargerAccount() (Wallet, error) {
 	if feeChargerAccountId == 0 {
 		panic("Please assign official fee charge account.")
 	}
