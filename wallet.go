@@ -53,7 +53,7 @@ var walletDAO = &walletDA0{}
 func (dao walletDA0) getWallet(db *gorm.DB, accountId uint64) (Wallet, error) {
 	var w Wallet
 	if err := db.
-		Preload("erc20TokenData").
+		Preload("ERC20TokenData").
 		Preload("ERC1155TokenData").
 		Where("account_id = ?", accountId).
 		First(&w).Error; err != nil {
