@@ -51,6 +51,19 @@ func (s *WalletCenter) SetFeeChargerAccount() (Wallet, error) {
 	return s.HandleWalletCommand(context.Background(), command)
 }
 
+func (s *WalletCenter) HandleWalletCommand(ctx context.Context, command WalletCommand) (Wallet, error) {
+	switch command.ActionType {
+	case Initialize:
+		return initWallet(s.db.WithContext(ctx), command)
+	default:
+		return updateWallet(s.db.WithContext(ctx), command)
+	}
+}
+
+func (s WalletCenter) GetWalletByAccountId(ctx context.Context, accountId uint64) (Wallet, error) {
+	return walletDAO.getWallet(s.db.WithContext(ctx), accountId)
+}
+
 func migration(db *gorm.DB) {
 	_ = db.AutoMigrate(ERC20TokenWallet{})
 	_ = db.AutoMigrate(ERC1155TokenWallet{})
@@ -63,19 +76,6 @@ func init() {
 	log.SetLevel(log.DebugLevel)
 	log.SetFormatter(&log.JSONFormatter{})
 	log.SetOutput(os.Stdout)
-}
-
-func (s *WalletCenter) HandleWalletCommand(ctx context.Context, command WalletCommand) (Wallet, error) {
-	switch command.ActionType {
-	case Initialize:
-		return initWallet(s.db.WithContext(ctx), command)
-	default:
-		return updateWallet(s.db.WithContext(ctx), command)
-	}
-}
-
-func (s WalletCenter) GetWalletByAccountId(ctx context.Context, accountId uint64) (Wallet, error) {
-	return walletDAO.getWallet(s.db.WithContext(ctx), accountId)
 }
 
 func initWallet(db *gorm.DB, command WalletCommand) (Wallet, error) {
