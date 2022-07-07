@@ -74,6 +74,10 @@ func (s *WalletCenter) HandleWalletCommand(ctx context.Context, command WalletCo
 	}
 }
 
+func (s WalletCenter) GetWalletByAccountId(ctx context.Context, accountId uint64) (Wallet, error) {
+	return walletDAO.getWallet(s.db.WithContext(ctx), accountId)
+}
+
 func initWallet(db *gorm.DB, command WalletCommand) (Wallet, error) {
 	err := db.Transaction(func(tx1 *gorm.DB) error {
 		// 1. Insert change logs, including ERC20 logs and ERC1155 Log.
