@@ -7,15 +7,7 @@ import (
 	"strings"
 )
 
-func covertUIntArrayToUInt64Array(arr []uint) []uint64 {
-	var result []uint64
-	for _, item := range arr {
-		result = append(result, uint64(item))
-	}
-	return result
-}
-
-func convertUintArrayToString(arr []uint, symbol string) string {
+func convertUintArrayToString(arr []uint64, symbol string) string {
 	var temp = make([]string, len(arr))
 	for k, v := range arr {
 		temp[k] = fmt.Sprintf("%d", v)
@@ -23,15 +15,15 @@ func convertUintArrayToString(arr []uint, symbol string) string {
 	return strings.Join(temp, symbol)
 }
 
-func convertStringToUIntArray(str string) []uint {
-	var result []uint
+func convertStringToUIntArray(str string) []uint64 {
+	var result []uint64
 	strArray := strings.Split(str, ",")
 	for _, item := range strArray {
 		intItem, err := strconv.ParseInt(item, 10, 32)
 		if err != nil {
 			continue
 		}
-		result = append(result, uint(intItem))
+		result = append(result, uint64(intItem))
 	}
 	return result
 }
@@ -52,7 +44,7 @@ func convertUInt64ArrayToUIntArray(arr []uint64) []uint {
 	return result
 }
 
-func getIndexFromUIntArray(array []uint, value uint) int {
+func getIndexFromUIntArray(array []uint64, value uint64) int {
 	for index, num := range array {
 		if num == value {
 			return index
