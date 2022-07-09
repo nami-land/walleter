@@ -31,7 +31,7 @@ type ERC20TokenWallet struct {
 	AccountId     uint64  `json:"account_id"`
 	Token         string  `json:"token" gorm:"type:varchar(20)"`
 	Balance       float64 `json:"balance"`
-	Decimal       uint    `json:"decimal"`
+	Decimal       uint64  `json:"decimal"`
 	TotalIncome   float64 `json:"total_income"`
 	TotalSpend    float64 `json:"total_spend"`
 	TotalDeposit  float64 `json:"total_deposit"`
