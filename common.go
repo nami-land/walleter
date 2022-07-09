@@ -11,7 +11,7 @@ const (
 type ERC20Token struct {
 	Index   uint64
 	Symbol  string
-	Decimal uint
+	Decimal uint64
 }
 
 var supportedERC20Tokens = []ERC20Token{

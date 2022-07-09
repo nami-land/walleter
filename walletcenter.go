@@ -22,12 +22,12 @@ type WalletCommand struct {
 type ERC20Command struct {
 	Token   ERC20TokenEnum
 	Value   float64
-	Decimal uint
+	Decimal uint64
 }
 
 type ERC1155Command struct {
-	Ids    []uint
-	Values []uint
+	Ids    []uint64
+	Values []uint64
 }
 
 type WalletCenter struct {
