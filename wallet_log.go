@@ -3,6 +3,7 @@ package wallet_center
 import (
 	"database/sql/driver"
 	"encoding/json"
+
 	"gorm.io/gorm"
 )
 
@@ -22,7 +23,7 @@ func (item *erc20TokenCollection) Scan(input interface{}) error {
 type erc20TokenData struct {
 	TokenType string  `json:"token_type" gorm:"type:varchar(20)"`
 	Amount    float64 `json:"amount"`
-	Decimal   uint    `json:"decimal"`
+	Decimal   uint64    `json:"decimal"`
 }
 
 func (item erc20TokenData) Value() (driver.Value, error) {
