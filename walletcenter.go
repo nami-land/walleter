@@ -133,7 +133,7 @@ func initWallet(db *gorm.DB, command WalletCommand) (Wallet, error) {
 	return walletDAO.getWallet(db, command.AccountId)
 }
 
-func updateWallet(db *gorm.DB, command WalletCommand) (Wallet, error) {
+func UpdateWallet(db *gorm.DB, command WalletCommand) (Wallet, error) {
 	switch command.AssetType {
 	case ERC20AssetType:
 		return handleERC20Command(db, command)
