@@ -56,7 +56,7 @@ func (s *WalletCenter) HandleWalletCommand(ctx context.Context, command WalletCo
 	case Initialize:
 		return initWallet(s.db.WithContext(ctx), command)
 	default:
-		return updateWallet(s.db.WithContext(ctx), command)
+		return UpdateWallet(s.db.WithContext(ctx), command)
 	}
 }
 
