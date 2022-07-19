@@ -144,119 +144,113 @@ func updateWallet(db *gorm.DB, command WalletCommand) (Wallet, error) {
 	}
 }
 
+// This function doesn't contain Transaction, so if we should wrap this function in a Transaction out of this function.
 func handleERC20Command(db *gorm.DB, command WalletCommand) (Wallet, error) {
-	err := db.Transaction(func(tx *gorm.DB) error {
-		logService := newWalletLogService()
-		validator := newWalletValidator()
+	logService := newWalletLogService()
+	validator := newWalletValidator()
 
-		userWallet, err := walletDAO.getWallet(db, command.AccountId)
-		if err != nil {
-			return err
-		}
+	userWallet, err := walletDAO.getWallet(db, command.AccountId)
+	if err != nil {
+		return Wallet{}, err
+	}
 
-		// 1. Verify that the user's current wallet status is normal
-		result, err := validator.validateWallet(userWallet)
-		if err != nil || result == false {
-			return err
-		}
+	// 1. Verify that the user's current wallet status is normal
+	result, err := validator.validateWallet(userWallet)
+	if err != nil || !result {
+		return Wallet{}, err
+	}
 
-		// 2.Insert a log message
-		erc20Log, err := logService.insertNewERC20WalletLog(tx, command, userWallet)
-		if err != nil {
-			return err
-		}
+	// 2.Insert a log message
+	erc20Log, err := logService.insertNewERC20WalletLog(db, command, userWallet)
+	if err != nil {
+		return Wallet{}, err
+	}
 
-		// 3. Whether to charge a fee
-		userWallet, err = newFeeChargerService().chargeFee(tx, command, userWallet)
-		if err != nil {
-			_, err = logService.updateERC20WalletLog(tx, erc20Log, Failed, userWallet)
-			return err
-		}
+	// 3. Whether to charge a fee
+	userWallet, err = newFeeChargerService().chargeFee(db, command, userWallet)
+	if err != nil {
+		_, err = logService.updateERC20WalletLog(db, erc20Log, Failed, userWallet)
+		return Wallet{}, err
+	}
 
-		// 4. Make changes to user assets
-		switch command.ActionType {
-		case Deposit:
-			for _, token := range command.ERC20Commands {
-				index, userERC20TokenWallet := getUserERC20TokenWallet(userWallet.ERC20TokenData, token.Token)
-				userERC20TokenWallet.Balance += token.Value
-				userERC20TokenWallet.TotalDeposit += token.Value
-				userWallet.ERC20TokenData[index] = userERC20TokenWallet
-				err = walletDAO.updateERC20WalletData(tx, userERC20TokenWallet)
-				if err != nil {
-					return err
-				}
+	// 4. Make changes to user assets
+	switch command.ActionType {
+	case Deposit:
+		for _, token := range command.ERC20Commands {
+			index, userERC20TokenWallet := getUserERC20TokenWallet(userWallet.ERC20TokenData, token.Token)
+			userERC20TokenWallet.Balance += token.Value
+			userERC20TokenWallet.TotalDeposit += token.Value
+			userWallet.ERC20TokenData[index] = userERC20TokenWallet
+			err = walletDAO.updateERC20WalletData(db, userERC20TokenWallet)
+			if err != nil {
+				return Wallet{}, err
 			}
-			break
-		case Withdraw:
-			for _, token := range command.ERC20Commands {
-				index, userERC20TokenWallet := getUserERC20TokenWallet(userWallet.ERC20TokenData, token.Token)
-				userERC20TokenWallet.Balance -= token.Value
-				userERC20TokenWallet.TotalWithdraw += token.Value
-				userWallet.ERC20TokenData[index] = userERC20TokenWallet
-				err = walletDAO.updateERC20WalletData(tx, userERC20TokenWallet)
-				if err != nil {
-					return err
-				}
-			}
-			break
-		case Income:
-			for _, token := range command.ERC20Commands {
-				index, userERC20TokenWallet := getUserERC20TokenWallet(userWallet.ERC20TokenData, token.Token)
-				userERC20TokenWallet.Balance += token.Value
-				userERC20TokenWallet.TotalIncome += token.Value
-				userWallet.ERC20TokenData[index] = userERC20TokenWallet
-				err = walletDAO.updateERC20WalletData(tx, userERC20TokenWallet)
-				if err != nil {
-					return err
-				}
-			}
-			break
-		case Spend:
-			for _, token := range command.ERC20Commands {
-				index, userERC20TokenWallet := getUserERC20TokenWallet(userWallet.ERC20TokenData, token.Token)
-				userERC20TokenWallet.Balance -= token.Value
-				userERC20TokenWallet.TotalSpend += token.Value
-				userWallet.ERC20TokenData[index] = userERC20TokenWallet
-				err = walletDAO.updateERC20WalletData(tx, userERC20TokenWallet)
-				if err != nil {
-					return err
-				}
-			}
-			break
-		case ChargeFee:
-			for _, token := range command.ERC20Commands {
-				index, userERC20TokenWallet := getUserERC20TokenWallet(userWallet.ERC20TokenData, token.Token)
-				userERC20TokenWallet.Balance -= token.Value
-				userERC20TokenWallet.TotalFee += token.Value
-				userWallet.ERC20TokenData[index] = userERC20TokenWallet
-				err = walletDAO.updateERC20WalletData(tx, userERC20TokenWallet)
-				if err != nil {
-					return err
-				}
-			}
-			break
-		default:
-			return errors.New("not support action type")
 		}
+	case Withdraw:
+		for _, token := range command.ERC20Commands {
+			index, userERC20TokenWallet := getUserERC20TokenWallet(userWallet.ERC20TokenData, token.Token)
+			userERC20TokenWallet.Balance -= token.Value
+			userERC20TokenWallet.TotalWithdraw += token.Value
+			userWallet.ERC20TokenData[index] = userERC20TokenWallet
+			err = walletDAO.updateERC20WalletData(db, userERC20TokenWallet)
+			if err != nil {
+				return Wallet{}, err
+			}
+		}
+	case Income:
+		for _, token := range command.ERC20Commands {
+			index, userERC20TokenWallet := getUserERC20TokenWallet(userWallet.ERC20TokenData, token.Token)
+			userERC20TokenWallet.Balance += token.Value
+			userERC20TokenWallet.TotalIncome += token.Value
+			userWallet.ERC20TokenData[index] = userERC20TokenWallet
+			err = walletDAO.updateERC20WalletData(db, userERC20TokenWallet)
+			if err != nil {
+				return Wallet{}, err
+			}
+		}
+	case Spend:
+		for _, token := range command.ERC20Commands {
+			index, userERC20TokenWallet := getUserERC20TokenWallet(userWallet.ERC20TokenData, token.Token)
+			userERC20TokenWallet.Balance -= token.Value
+			userERC20TokenWallet.TotalSpend += token.Value
+			userWallet.ERC20TokenData[index] = userERC20TokenWallet
+			err = walletDAO.updateERC20WalletData(db, userERC20TokenWallet)
+			if err != nil {
+				return Wallet{}, err
+			}
+		}
+	case ChargeFee:
+		for _, token := range command.ERC20Commands {
+			index, userERC20TokenWallet := getUserERC20TokenWallet(userWallet.ERC20TokenData, token.Token)
+			userERC20TokenWallet.Balance -= token.Value
+			userERC20TokenWallet.TotalFee += token.Value
+			userWallet.ERC20TokenData[index] = userERC20TokenWallet
+			err = walletDAO.updateERC20WalletData(db, userERC20TokenWallet)
+			if err != nil {
+				return Wallet{}, err
+			}
+		}
+	default:
+		return Wallet{}, errors.New("not support action type")
+	}
 
-		// 6. Generate new verification information
-		newCheckSign, err := validator.generateNewSignHash(userWallet)
-		if err != nil {
-			return err
-		}
-		userWallet.CheckSign = newCheckSign
-		err = walletDAO.updateWalletCheckSign(tx, userWallet)
-		if err != nil {
-			return err
-		}
+	// 6. Generate new verification information
+	newCheckSign, err := validator.generateNewSignHash(userWallet)
+	if err != nil {
+		return Wallet{}, err
+	}
+	userWallet.CheckSign = newCheckSign
+	err = walletDAO.updateWalletCheckSign(db, userWallet)
+	if err != nil {
+		return Wallet{}, err
+	}
 
-		// 8. Update log information
-		_, err = newWalletLogService().updateERC20WalletLog(tx, erc20Log, Done, userWallet)
-		if err != nil {
-			return err
-		}
-		return nil
-	})
+	// 8. Update log information
+	_, err = newWalletLogService().updateERC20WalletLog(db, erc20Log, Done, userWallet)
+	if err != nil {
+		return Wallet{}, err
+	}
+
 	if err != nil {
 		return Wallet{}, err
 	}
@@ -264,100 +258,96 @@ func handleERC20Command(db *gorm.DB, command WalletCommand) (Wallet, error) {
 }
 
 func handleERC1155Command(db *gorm.DB, command WalletCommand) (Wallet, error) {
-	err := db.Transaction(func(tx *gorm.DB) error {
-		logService := newWalletLogService()
-		validator := newWalletValidator()
+	logService := newWalletLogService()
+	validator := newWalletValidator()
 
-		userWallet, err := walletDAO.getWallet(db, command.AccountId)
-		if err != nil {
-			return err
-		}
+	userWallet, err := walletDAO.getWallet(db, command.AccountId)
+	if err != nil {
+		return Wallet{}, err
+	}
 
-		// 1. Verify that the user's current wallet status is normal
-		result, err := validator.validateWallet(userWallet)
-		if err != nil || !result {
-			return err
-		}
+	// 1. Verify that the user's current wallet status is normal
+	result, err := validator.validateWallet(userWallet)
+	if err != nil || !result {
+		return Wallet{}, err
+	}
 
-		// 2.Insert a log message
-		erc1155Log, err := logService.insertNewERC1155WalletLog(tx, command, userWallet)
-		if err != nil {
-			return err
-		}
+	// 2.Insert a log message
+	erc1155Log, err := logService.insertNewERC1155WalletLog(db, command, userWallet)
+	if err != nil {
+		return Wallet{}, err
+	}
 
-		// 3. Whether to charge a fee
-		userWallet, err = newFeeChargerService().chargeFee(tx, command, userWallet)
-		if err != nil {
-			_, err = logService.updateERC1155WalletLog(tx, erc1155Log, Failed, userWallet)
-			return err
-		}
+	// 3. Whether to charge a fee
+	userWallet, err = newFeeChargerService().chargeFee(db, command, userWallet)
+	if err != nil {
+		_, err = logService.updateERC1155WalletLog(db, erc1155Log, Failed, userWallet)
+		return Wallet{}, err
+	}
 
-		// 5. Make changes to user assets
-		ids := convertStringToUIntArray(userWallet.ERC1155TokenData.Ids)
-		values := convertStringToUIntArray(userWallet.ERC1155TokenData.Values)
-		switch command.ActionType {
-		case Deposit, Income:
-			for index, id := range command.ERC1155Command.Ids {
-				value := command.ERC1155Command.Values[index]
-				i := getIndexFromUIntArray(ids, id)
-				if i == -1 {
-					ids = append(ids, id)
-					values = append(values, value)
-				} else {
-					values[i] = values[i] + value
-				}
-
-				userWallet.ERC1155TokenData.Ids = convertUintArrayToString(ids, ",")
-				userWallet.ERC1155TokenData.Values = convertUintArrayToString(values, ",")
-				err = walletDAO.updateERC1155WalletData(tx, userWallet.ERC1155TokenData)
-				if err != nil {
-					return err
-				}
+	// 5. Make changes to user assets
+	ids := convertStringToUIntArray(userWallet.ERC1155TokenData.Ids)
+	values := convertStringToUIntArray(userWallet.ERC1155TokenData.Values)
+	switch command.ActionType {
+	case Deposit, Income:
+		for index, id := range command.ERC1155Command.Ids {
+			value := command.ERC1155Command.Values[index]
+			i := getIndexFromUIntArray(ids, id)
+			if i == -1 {
+				ids = append(ids, id)
+				values = append(values, value)
+			} else {
+				values[i] = values[i] + value
 			}
-			break
-		case Withdraw, Spend:
-			for index, id := range command.ERC1155Command.Ids {
-				value := command.ERC1155Command.Values[index]
-				i := getIndexFromUIntArray(ids, id)
-				if i == -1 {
-					return errors.New("insufficient nft balance")
-				} else {
-					if values[i] < value {
-						return errors.New("insufficient nft balance")
-					}
-					values[i] = values[i] - value
-				}
 
-				userWallet.ERC1155TokenData.Ids = convertUintArrayToString(ids, ",")
-				userWallet.ERC1155TokenData.Values = convertUintArrayToString(values, ",")
-				err = walletDAO.updateERC1155WalletData(tx, userWallet.ERC1155TokenData)
-				if err != nil {
-					return err
-				}
+			userWallet.ERC1155TokenData.Ids = convertUintArrayToString(ids, ",")
+			userWallet.ERC1155TokenData.Values = convertUintArrayToString(values, ",")
+			err = walletDAO.updateERC1155WalletData(db, userWallet.ERC1155TokenData)
+			if err != nil {
+				return Wallet{}, err
 			}
-			break
-		default:
-			return errors.New("not support action type")
 		}
+	case Withdraw, Spend:
+		for index, id := range command.ERC1155Command.Ids {
+			value := command.ERC1155Command.Values[index]
+			i := getIndexFromUIntArray(ids, id)
+			if i == -1 {
+				return Wallet{}, errors.New("insufficient nft balance")
+			} else {
+				if values[i] < value {
+					return Wallet{}, errors.New("insufficient nft balance")
+				}
+				values[i] = values[i] - value
+			}
 
-		// 6. Generate new verification information
-		newCheckSign, err := validator.generateNewSignHash(userWallet)
-		if err != nil {
-			return err
+			userWallet.ERC1155TokenData.Ids = convertUintArrayToString(ids, ",")
+			userWallet.ERC1155TokenData.Values = convertUintArrayToString(values, ",")
+			err = walletDAO.updateERC1155WalletData(db, userWallet.ERC1155TokenData)
+			if err != nil {
+				return Wallet{}, err
+			}
 		}
-		userWallet.CheckSign = newCheckSign
-		err = walletDAO.updateWalletCheckSign(tx, userWallet)
-		if err != nil {
-			return err
-		}
+	default:
+		return Wallet{}, errors.New("not support action type")
+	}
 
-		// 8. Update log information
-		_, err = newWalletLogService().updateERC1155WalletLog(tx, erc1155Log, Done, userWallet)
-		if err != nil {
-			return err
-		}
-		return nil
-	})
+	// 6. Generate new verification information
+	newCheckSign, err := validator.generateNewSignHash(userWallet)
+	if err != nil {
+		return Wallet{}, err
+	}
+	userWallet.CheckSign = newCheckSign
+	err = walletDAO.updateWalletCheckSign(db, userWallet)
+	if err != nil {
+		return Wallet{}, err
+	}
+
+	// 8. Update log information
+	_, err = newWalletLogService().updateERC1155WalletLog(db, erc1155Log, Done, userWallet)
+	if err != nil {
+		return Wallet{}, err
+	}
+
 	if err != nil {
 		return Wallet{}, err
 	}
