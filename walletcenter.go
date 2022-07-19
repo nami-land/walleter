@@ -1,7 +1,6 @@
 package wallet_center
 
 import (
-	"context"
 	"errors"
 	"os"
 
@@ -48,20 +47,20 @@ func (s *WalletCenter) SetFeeChargerAccount() (Wallet, error) {
 	}
 
 	command := buildInitializedCommandFromAccount(feeChargerAccountId)
-	return s.HandleWalletCommand(context.Background(), command)
+	return s.HandleWalletCommand(s.db, command)
 }
 
-func (s *WalletCenter) HandleWalletCommand(ctx context.Context, command WalletCommand) (Wallet, error) {
+func (s *WalletCenter) HandleWalletCommand(db *gorm.DB, command WalletCommand) (Wallet, error) {
 	switch command.ActionType {
 	case Initialize:
-		return initWallet(s.db.WithContext(ctx), command)
+		return initWallet(db, command)
 	default:
-		return UpdateWallet(s.db.WithContext(ctx), command)
+		return updateWallet(db, command)
 	}
 }
 
-func (s WalletCenter) GetWalletByAccountId(ctx context.Context, accountId uint64) (Wallet, error) {
-	return walletDAO.getWallet(s.db.WithContext(ctx), accountId)
+func (s WalletCenter) GetWalletByAccountId(accountId uint64) (Wallet, error) {
+	return walletDAO.getWallet(s.db, accountId)
 }
 
 func migration(db *gorm.DB) {
@@ -133,7 +132,7 @@ func initWallet(db *gorm.DB, command WalletCommand) (Wallet, error) {
 	return walletDAO.getWallet(db, command.AccountId)
 }
 
-func UpdateWallet(db *gorm.DB, command WalletCommand) (Wallet, error) {
+func updateWallet(db *gorm.DB, command WalletCommand) (Wallet, error) {
 	switch command.AssetType {
 	case ERC20AssetType:
 		return handleERC20Command(db, command)
