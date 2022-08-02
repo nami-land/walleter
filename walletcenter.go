@@ -188,6 +188,9 @@ func handleERC20Command(db *gorm.DB, command WalletCommand) (Wallet, error) {
 	case Withdraw:
 		for _, token := range command.ERC20Commands {
 			index, userERC20TokenWallet := getUserERC20TokenWallet(userWallet.ERC20TokenData, token.Token)
+			if userERC20TokenWallet.Balance < token.Value {
+				return Wallet{}, errors.New("insufficient balance")
+			}
 			userERC20TokenWallet.Balance -= token.Value
 			userERC20TokenWallet.TotalWithdraw += token.Value
 			userWallet.ERC20TokenData[index] = userERC20TokenWallet
@@ -210,6 +213,9 @@ func handleERC20Command(db *gorm.DB, command WalletCommand) (Wallet, error) {
 	case Spend:
 		for _, token := range command.ERC20Commands {
 			index, userERC20TokenWallet := getUserERC20TokenWallet(userWallet.ERC20TokenData, token.Token)
+			if userERC20TokenWallet.Balance < token.Value {
+				return Wallet{}, errors.New("insufficient balance")
+			}
 			userERC20TokenWallet.Balance -= token.Value
 			userERC20TokenWallet.TotalSpend += token.Value
 			userWallet.ERC20TokenData[index] = userERC20TokenWallet
@@ -221,6 +227,9 @@ func handleERC20Command(db *gorm.DB, command WalletCommand) (Wallet, error) {
 	case ChargeFee:
 		for _, token := range command.ERC20Commands {
 			index, userERC20TokenWallet := getUserERC20TokenWallet(userWallet.ERC20TokenData, token.Token)
+			if userERC20TokenWallet.Balance < token.Value {
+				return Wallet{}, errors.New("insufficient balance")
+			}
 			userERC20TokenWallet.Balance -= token.Value
 			userERC20TokenWallet.TotalFee += token.Value
 			userWallet.ERC20TokenData[index] = userERC20TokenWallet
