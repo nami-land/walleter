@@ -166,10 +166,15 @@ func handleERC20Command(db *gorm.DB, command WalletCommand) (Wallet, error) {
 	}
 
 	// 3. Whether to charge a fee
-	userWallet, err = newFeeChargerService().chargeFee(db, command, userWallet)
-	if err != nil {
-		_, err = logService.updateERC20WalletLog(db, erc20Log, Failed, userWallet)
-		return Wallet{}, err
+	for _, fee := range command.FeeCommands {
+		if fee.Value <= 0 {
+			continue
+		}
+		userWallet, err = newFeeChargerService().chargeFee(db, fee, userWallet)
+		if err != nil {
+			_, err = logService.updateERC20WalletLog(db, erc20Log, Failed, userWallet)
+			return Wallet{}, err
+		}
 	}
 
 	// 4. Make changes to user assets
@@ -226,17 +231,7 @@ func handleERC20Command(db *gorm.DB, command WalletCommand) (Wallet, error) {
 		}
 	case ChargeFee:
 		for _, token := range command.ERC20Commands {
-			index, userERC20TokenWallet := getUserERC20TokenWallet(userWallet.ERC20TokenData, token.Token)
-			if userERC20TokenWallet.Balance < token.Value {
-				return Wallet{}, errors.New("insufficient balance")
-			}
-			userERC20TokenWallet.Balance -= token.Value
-			userERC20TokenWallet.TotalFee += token.Value
-			userWallet.ERC20TokenData[index] = userERC20TokenWallet
-			err = walletDAO.updateERC20WalletData(db, userERC20TokenWallet)
-			if err != nil {
-				return Wallet{}, err
-			}
+			return newFeeChargerService().chargeFee(db, token, userWallet)
 		}
 	default:
 		return Wallet{}, errors.New("not support action type")
@@ -287,10 +282,15 @@ func handleERC1155Command(db *gorm.DB, command WalletCommand) (Wallet, error) {
 	}
 
 	// 3. Whether to charge a fee
-	userWallet, err = newFeeChargerService().chargeFee(db, command, userWallet)
-	if err != nil {
-		_, err = logService.updateERC1155WalletLog(db, erc1155Log, Failed, userWallet)
-		return Wallet{}, err
+	for _, fee := range command.FeeCommands {
+		if fee.Value <= 0 {
+			continue
+		}
+		userWallet, err = newFeeChargerService().chargeFee(db, fee, userWallet)
+		if err != nil {
+			_, err = logService.updateERC1155WalletLog(db, erc1155Log, Failed, userWallet)
+			return Wallet{}, err
+		}
 	}
 
 	// 5. Make changes to user assets
@@ -368,36 +368,66 @@ func newFeeChargerService() *feeChargerService {
 	return &feeChargerService{}
 }
 
-func (*feeChargerService) chargeFee(db *gorm.DB, command WalletCommand, userWallet Wallet) (Wallet, error) {
+//func (*feeChargerService) chargeFee(db *gorm.DB, command WalletCommand, userWallet Wallet) (Wallet, error) {
+//	// get fee charger account.
+//	feeChargerWallet, err := walletDAO.getWallet(db, feeChargerAccountId)
+//	if err != nil {
+//		return userWallet, err
+//	}
+//
+//	for _, fee := range command.FeeCommands {
+//		if fee.Value <= 0 {
+//			continue
+//		}
+//
+//		index, userERC20TokenWallet := getUserERC20TokenWallet(userWallet.ERC20TokenData, fee.Token)
+//		if index < 0 || userERC20TokenWallet.Balance < fee.Value {
+//			return userWallet, errors.New("insufficient balance for fee")
+//		}
+//
+//		userERC20TokenWallet.Balance -= fee.Value
+//		userERC20TokenWallet.TotalFee += fee.Value
+//		userWallet.ERC20TokenData[index] = userERC20TokenWallet
+//
+//		index, feeChargerERC20TokenWallet := getUserERC20TokenWallet(feeChargerWallet.ERC20TokenData, fee.Token)
+//		feeChargerERC20TokenWallet.Balance += fee.Value
+//		feeChargerERC20TokenWallet.TotalFee += fee.Value
+//		feeChargerWallet.ERC20TokenData[index] = feeChargerERC20TokenWallet
+//		err = walletDAO.updateERC20WalletData(db, feeChargerERC20TokenWallet)
+//		if err != nil {
+//			return Wallet{}, err
+//		}
+//	}
+//
+//	return userWallet, nil
+//}
+
+func (*feeChargerService) chargeFee(db *gorm.DB, token ERC20Command, userWallet Wallet) (Wallet, error) {
+	// get fee charger account.
 	feeChargerWallet, err := walletDAO.getWallet(db, feeChargerAccountId)
 	if err != nil {
 		return userWallet, err
 	}
 
-	for _, fee := range command.FeeCommands {
-		if fee.Value <= 0 {
-			continue
-		}
-		index, userERC20TokenWallet := getUserERC20TokenWallet(userWallet.ERC20TokenData, fee.Token)
-		if index < 0 || userERC20TokenWallet.Balance < fee.Value {
-			return userWallet, errors.New("insufficient balance for fee")
-		}
-
-		userERC20TokenWallet.Balance -= fee.Value
-		userERC20TokenWallet.TotalFee += fee.Value
-		userWallet.ERC20TokenData[index] = userERC20TokenWallet
-
-		index, feeChargerERC20TokenWallet := getUserERC20TokenWallet(feeChargerWallet.ERC20TokenData, fee.Token)
-		feeChargerERC20TokenWallet.Balance += fee.Value
-		feeChargerERC20TokenWallet.TotalFee += fee.Value
-		feeChargerWallet.ERC20TokenData[index] = feeChargerERC20TokenWallet
-		err = walletDAO.updateERC20WalletData(db, feeChargerERC20TokenWallet)
-		if err != nil {
-			return Wallet{}, err
-		}
+	index, userERC20TokenWallet := getUserERC20TokenWallet(userWallet.ERC20TokenData, token.Token)
+	if index < 0 || userERC20TokenWallet.Balance < token.Value {
+		return userWallet, errors.New("insufficient balance for fee")
 	}
 
-	return userWallet, nil
+	userERC20TokenWallet.Balance -= token.Value
+	userERC20TokenWallet.TotalFee += token.Value
+	userWallet.ERC20TokenData[index] = userERC20TokenWallet
+	err = walletDAO.updateERC20WalletData(db, userWallet.ERC20TokenData[index])
+	if err != nil {
+		return userWallet, err
+	}
+
+	index, feeChargerERC20TokenWallet := getUserERC20TokenWallet(feeChargerWallet.ERC20TokenData, token.Token)
+	feeChargerERC20TokenWallet.Balance += token.Value
+	feeChargerERC20TokenWallet.TotalFee += token.Value
+	feeChargerWallet.ERC20TokenData[index] = feeChargerERC20TokenWallet
+	err = walletDAO.updateERC20WalletData(db, feeChargerERC20TokenWallet)
+	return userWallet, err
 }
 
 func getUserERC20TokenWallet(tokens []ERC20TokenWallet, token ERC20TokenEnum) (int, ERC20TokenWallet) {
