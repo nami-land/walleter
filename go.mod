@@ -1,11 +1,10 @@
-module github.com/neco-fun/wallet-center
+module github.com/neco-fun/walleter
 
 go 1.19
 
 require (
 	github.com/go-sql-driver/mysql v1.6.0
 	github.com/sirupsen/logrus v1.8.1
-	gopkg.in/yaml.v2 v2.4.0
 	gorm.io/gorm v1.23.6
 )
 
