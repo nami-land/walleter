@@ -17,7 +17,7 @@ type Wallet struct {
 	CheckSign        string             `json:"check_sign" gorm:"type:varchar(128);not null;"`
 }
 
-func (w *Wallet) Value() (driver.Value, error) {
+func (w Wallet) Value() (driver.Value, error) {
 	b, err := json.Marshal(w)
 	return string(b), err
 }

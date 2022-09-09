@@ -78,7 +78,7 @@ type erc20TokenCollection struct {
 	Items []erc20TokenData `json:"items"`
 }
 
-func (item *erc20TokenCollection) Value() (driver.Value, error) {
+func (item erc20TokenCollection) Value() (driver.Value, error) {
 	b, err := json.Marshal(item)
 	return string(b), err
 }
@@ -93,7 +93,7 @@ type erc20TokenData struct {
 	Decimal   uint64  `json:"decimal"`
 }
 
-func (item *erc20TokenData) Value() (driver.Value, error) {
+func (item erc20TokenData) Value() (driver.Value, error) {
 	b, err := json.Marshal(item)
 	return string(b), err
 }
