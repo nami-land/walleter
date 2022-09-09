@@ -189,3 +189,82 @@ func buildInitializedCommandFromAccount(accountId uint64) WalletCommand {
 		FeeCommands:    []ERC20Command{},
 	}
 }
+
+func NewERC20WalletCommand(
+	accountId uint64,
+	actionType WalletActionType,
+	businessModule string,
+	erc20Tokens map[ERC20TokenEnum]float64,
+	fees map[ERC20TokenEnum]float64,
+) WalletCommand {
+	var erc20Commands []ERC20Command
+	for key, value := range erc20Tokens {
+		for _, supportToken := range supportedERC20Tokens {
+			if key.String() == supportToken.Symbol {
+				erc20Commands = append(erc20Commands, ERC20Command{
+					Token:   key,
+					Value:   value,
+					Decimal: supportToken.Decimal,
+				})
+				break
+			}
+		}
+	}
+
+	var feeCommands []ERC20Command
+	for key, value := range fees {
+		for _, supportToken := range supportedERC20Tokens {
+			if key.String() == supportToken.Symbol {
+				feeCommands = append(feeCommands, ERC20Command{
+					Token:   key,
+					Value:   value,
+					Decimal: supportToken.Decimal,
+				})
+				break
+			}
+		}
+	}
+
+	return WalletCommand{
+		AccountId:      accountId,
+		AssetType:      ERC20AssetType,
+		ERC20Commands:  erc20Commands,
+		ERC1155Command: ERC1155Command{},
+		BusinessModule: businessModule,
+		ActionType:     actionType,
+		FeeCommands:    feeCommands,
+	}
+}
+
+func NewERC1155WalletCommand(
+	accountId uint64,
+	actionType WalletActionType,
+	businessModule string,
+	ids []uint64,
+	values []uint64,
+	fees map[ERC20TokenEnum]float64,
+) WalletCommand {
+	var feeCommands []ERC20Command
+	for key, value := range fees {
+		for _, supportToken := range supportedERC20Tokens {
+			if key.String() == supportToken.Symbol {
+				feeCommands = append(feeCommands, ERC20Command{
+					Token:   key,
+					Value:   value,
+					Decimal: supportToken.Decimal,
+				})
+				break
+			}
+		}
+	}
+
+	return WalletCommand{
+		AccountId:      accountId,
+		AssetType:      ERC1155AssetType,
+		ERC20Commands:  nil,
+		ERC1155Command: ERC1155Command{ids, values},
+		BusinessModule: businessModule,
+		ActionType:     actionType,
+		FeeCommands:    feeCommands,
+	}
+}
