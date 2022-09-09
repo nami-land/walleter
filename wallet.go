@@ -11,13 +11,13 @@ import (
 
 type Wallet struct {
 	gorm.Model       `swagger-ignore:"true"`
-	AccountId        uint64             `json:"account_id" gorm:"unique;not null"` // 玩家账户ID
+	AccountId        uint64             `json:"account_id" gorm:"unique;not null"`
 	ERC20TokenData   []ERC20TokenWallet `json:"erc_20_token_data" gorm:"foreignKey:AccountId;references:AccountId"`
 	ERC1155TokenData ERC1155TokenWallet `json:"erc_1155_token_data" gorm:"foreignKey:AccountId;references:AccountId"`
-	CheckSign        string             `json:"check_sign" gorm:"type:varchar(128);not null;comment:'安全签名'"`
+	CheckSign        string             `json:"check_sign" gorm:"type:varchar(128);not null;"`
 }
 
-func (w Wallet) Value() (driver.Value, error) {
+func (w *Wallet) Value() (driver.Value, error) {
 	b, err := json.Marshal(w)
 	return string(b), err
 }
@@ -50,10 +50,8 @@ type walletDA0 struct{}
 
 var walletDAO = &walletDA0{}
 
-func (dao walletDA0) getWallet(db *gorm.DB, accountId uint64) (Wallet, error) {
-	var w Wallet
-	if err := db.
-		Preload("ERC20TokenData").
+func (dao walletDA0) getWallet(db *gorm.DB, accountId uint64) (w Wallet, err error) {
+	if err = db.Preload("ERC20TokenData").
 		Preload("ERC1155TokenData").
 		Where("account_id = ?", accountId).
 		First(&w).Error; err != nil {

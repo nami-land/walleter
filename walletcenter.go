@@ -8,14 +8,30 @@ import (
 	"gorm.io/gorm"
 )
 
+// WalletCommand is an object of the operation for withdrawals or depositions.
+// Anytime when users deposit, withdraw or spend an asset, we should
+// construct a WalletCommand object to operate the wallet in database.
 type WalletCommand struct {
-	AccountId      uint64    // User account id. unique
-	AssetType      AssetType // 0: ERC20 token, 1: erc1155 token.
-	ERC20Commands  []ERC20Command
+	// User account id. unique
+	AccountId uint64
+
+	// 0: ERC20 token, 1: erc1155 token. 2. other type.
+	AssetType AssetType
+
+	// Action of this command. initialize, withdraw, deposit, etc.
+	ActionType WalletActionType
+
+	// ERC20 command, if we want to operate ERC20 asset, this should not be nil. otherwise this must be nil.
+	ERC20Commands []ERC20Command
+
+	// ERC20 command, if we want to operate ERC1155 asset, this should not be nil. otherwise this must be nil.
 	ERC1155Command ERC1155Command
+
+	// Fee charging command, if len(FeeCommands) > 0, assets should be deducted from user's account.
+	FeeCommands []ERC20Command
+
+	// A name about which part sent this command
 	BusinessModule string
-	ActionType     WalletActionType
-	FeeCommands    []ERC20Command // charge fee, if len(FeeCommands) > 0, should be deducted from user's account.
 }
 
 type ERC20Command struct {
@@ -59,7 +75,7 @@ func (s *WalletCenter) HandleWalletCommand(db *gorm.DB, command WalletCommand) (
 	}
 }
 
-func (s WalletCenter) GetWalletByAccountId(accountId uint64) (Wallet, error) {
+func (s *WalletCenter) GetWalletByAccountId(accountId uint64) (Wallet, error) {
 	return walletDAO.getWallet(s.db, accountId)
 }
 
@@ -303,7 +319,7 @@ func handleERC1155Command(db *gorm.DB, command WalletCommand) (Wallet, error) {
 	case Deposit, Income:
 		for index, id := range command.ERC1155Command.Ids {
 			value := command.ERC1155Command.Values[index]
-			i := getIndexFromUIntArray(ids, id)
+			i := indexOfArray(ids, id)
 			if i == -1 {
 				ids = append(ids, id)
 				values = append(values, value)
@@ -311,8 +327,8 @@ func handleERC1155Command(db *gorm.DB, command WalletCommand) (Wallet, error) {
 				values[i] = values[i] + value
 			}
 
-			userWallet.ERC1155TokenData.Ids = convertUintArrayToString(ids, ",")
-			userWallet.ERC1155TokenData.Values = convertUintArrayToString(values, ",")
+			userWallet.ERC1155TokenData.Ids = convertArrayToString(ids, ",")
+			userWallet.ERC1155TokenData.Values = convertArrayToString(values, ",")
 			err = walletDAO.updateERC1155WalletData(db, userWallet.ERC1155TokenData)
 			if err != nil {
 				return Wallet{}, err
@@ -321,7 +337,7 @@ func handleERC1155Command(db *gorm.DB, command WalletCommand) (Wallet, error) {
 	case Withdraw, Spend:
 		for index, id := range command.ERC1155Command.Ids {
 			value := command.ERC1155Command.Values[index]
-			i := getIndexFromUIntArray(ids, id)
+			i := indexOfArray(ids, id)
 			if i == -1 {
 				return Wallet{}, errors.New("insufficient nft balance")
 			} else {
@@ -331,8 +347,8 @@ func handleERC1155Command(db *gorm.DB, command WalletCommand) (Wallet, error) {
 				values[i] = values[i] - value
 			}
 
-			userWallet.ERC1155TokenData.Ids = convertUintArrayToString(ids, ",")
-			userWallet.ERC1155TokenData.Values = convertUintArrayToString(values, ",")
+			userWallet.ERC1155TokenData.Ids = convertArrayToString(ids, ",")
+			userWallet.ERC1155TokenData.Values = convertArrayToString(values, ",")
 			err = walletDAO.updateERC1155WalletData(db, userWallet.ERC1155TokenData)
 			if err != nil {
 				return Wallet{}, err

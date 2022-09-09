@@ -4,6 +4,7 @@ import (
 	"gorm.io/gorm"
 )
 
+// parseCommandToERC20WalletArray convert erc20command array to erc20TokenWallet Array.
 func parseCommandToERC20WalletArray(command WalletCommand) []ERC20TokenWallet {
 	var result []ERC20TokenWallet
 	for _, item := range command.ERC20Commands {
@@ -22,8 +23,8 @@ func parseCommandToERC1155Wallet(command WalletCommand) ERC1155TokenWallet {
 	return ERC1155TokenWallet{
 		Model:     gorm.Model{},
 		AccountId: command.AccountId,
-		Ids:       convertUintArrayToString(command.ERC1155Command.Ids, ","),
-		Values:    convertUintArrayToString(command.ERC1155Command.Values, ","),
+		Ids:       convertArrayToString(command.ERC1155Command.Ids, ","),
+		Values:    convertArrayToString(command.ERC1155Command.Values, ","),
 	}
 }
 
@@ -52,8 +53,8 @@ func parseCommandToERC1155WalletLog(command WalletCommand, w Wallet) ERC1155Wall
 		AccountId:      command.AccountId,
 		BusinessModule: command.BusinessModule,
 		ActionType:     command.ActionType.String(),
-		Ids:            convertUintArrayToString(command.ERC1155Command.Ids, ","),
-		Values:         convertUintArrayToString(command.ERC1155Command.Values, ","),
+		Ids:            convertArrayToString(command.ERC1155Command.Ids, ","),
+		Values:         convertArrayToString(command.ERC1155Command.Values, ","),
 		Fees:           erc20TokenCollection{Items: fees},
 		Status:         Pending.String(),
 		OriginalWallet: w,

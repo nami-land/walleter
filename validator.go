@@ -8,6 +8,7 @@ import (
 	"gorm.io/gorm"
 )
 
+// walletValidator will check if the sign code of wallet is correct.
 type walletValidator struct{}
 
 func newWalletValidator() *walletValidator {
@@ -20,6 +21,7 @@ func (receiver walletValidator) validateWallet(wallet Wallet) (bool, error) {
 	if err != nil {
 		return false, err
 	}
+
 	if md5Value != checkSign {
 		return false, errors.New("check sign is invalid")
 	}
@@ -63,6 +65,7 @@ func (receiver walletValidator) generateNewSignHash(w Wallet) (string, error) {
 	if err != nil {
 		return "", err
 	}
+	
 	md5Value := md5Value(string(b))
 	return md5Value, nil
 }
