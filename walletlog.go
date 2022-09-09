@@ -13,6 +13,7 @@ type ERC20WalletLog struct {
 	AccountId      uint64               `json:"account_id"`
 	BusinessModule string               `json:"business_module" gorm:"type:varchar(64);not null;"`
 	ActionType     string               `json:"action_type" gorm:"type:varchar(64);not null;"`
+	Source         string               `json:"source" gorm:"type:varchar(20)"`
 	Tokens         erc20TokenCollection `json:"tokens" gorm:"type:json;not null"`
 	Fees           erc20TokenCollection `json:"fees" gorm:"type:json;"`
 	Status         string               `json:"status" gorm:"type:varchar(64);not null;"`
@@ -26,6 +27,7 @@ type ERC1155WalletLog struct {
 	AccountId      uint64               `json:"account_id"`
 	BusinessModule string               `json:"business_module" gorm:"type:varchar(64);not null;"`
 	ActionType     string               `json:"action_type" gorm:"type:varchar(64);not null;"`
+	Source         string               `json:"source" gorm:"type:varchar(20)"`
 	Ids            string               `json:"ids"`
 	Values         string               `json:"values"`
 	Fees           erc20TokenCollection `json:"fees" gorm:"type:json;"`

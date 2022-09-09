@@ -41,6 +41,7 @@ func parseCommandToERC20WalletLog(command WalletCommand, w Wallet) ERC20WalletLo
 		Fees:           erc20TokenCollection{Items: fees},
 		Status:         Pending.String(),
 		OriginalWallet: w,
+		Source:         command.CommandSource.String(),
 		SettledWallet:  Wallet{},
 	}
 }
@@ -57,6 +58,7 @@ func parseCommandToERC1155WalletLog(command WalletCommand, w Wallet) ERC1155Wall
 		Values:         convertArrayToString(command.ERC1155Command.Values, ","),
 		Fees:           erc20TokenCollection{Items: fees},
 		Status:         Pending.String(),
+		Source:         command.CommandSource.String(),
 		OriginalWallet: w,
 		SettledWallet:  Wallet{},
 	}

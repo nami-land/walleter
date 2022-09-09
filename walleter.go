@@ -32,6 +32,9 @@ type WalletCommand struct {
 
 	// A name about which part sent this command
 	BusinessModule string
+
+	// Command happened source.
+	CommandSource CommandSourceType
 }
 
 type ERC20Command struct {
@@ -194,6 +197,7 @@ func NewERC20WalletCommand(
 	accountId uint64,
 	actionType WalletActionType,
 	businessModule string,
+	commandSource CommandSourceType,
 	erc20Tokens map[ERC20TokenEnum]float64,
 	fees map[ERC20TokenEnum]float64,
 ) WalletCommand {
@@ -232,6 +236,7 @@ func NewERC20WalletCommand(
 		ERC1155Command: ERC1155Command{},
 		BusinessModule: businessModule,
 		ActionType:     actionType,
+		CommandSource:  commandSource,
 		FeeCommands:    feeCommands,
 	}
 }
@@ -240,6 +245,7 @@ func NewERC1155WalletCommand(
 	accountId uint64,
 	actionType WalletActionType,
 	businessModule string,
+	commandSource CommandSourceType,
 	ids []uint64,
 	values []uint64,
 	fees map[ERC20TokenEnum]float64,
@@ -264,6 +270,7 @@ func NewERC1155WalletCommand(
 		ERC20Commands:  nil,
 		ERC1155Command: ERC1155Command{ids, values},
 		BusinessModule: businessModule,
+		CommandSource:  commandSource,
 		ActionType:     actionType,
 		FeeCommands:    feeCommands,
 	}

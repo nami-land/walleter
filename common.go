@@ -45,16 +45,6 @@ var supportedERC20Tokens = []ERC20Token{
 	},
 }
 
-//func GetERC20TokenEnum(tokenName string) (ERC20TokenEnum, error) {
-//	switch tokenName {
-//	case "NFISH":
-//		return NFISH, nil
-//	case "BUSD":
-//		return BUSD, nil
-//	}
-//	return NFISH, errors.New("incorrect token tokenName")
-//}
-
 // WalletActionType Actions for wallet command, we will change user's assets in wallet according to wallet action type.
 type WalletActionType int
 
@@ -113,6 +103,26 @@ func (s WalletLogStatus) String() string {
 		return "Done"
 	case Failed:
 		return "Failed"
+	}
+	return "unknown"
+}
+
+type CommandSourceType int
+
+const (
+	InGame   CommandSourceType = 0
+	BNBChain CommandSourceType = 1
+	Ethereum CommandSourceType = 2
+)
+
+func (s CommandSourceType) String() string {
+	switch s {
+	case InGame:
+		return "InGame"
+	case BNBChain:
+		return "BNBChain"
+	case Ethereum:
+		return "Ethereum"
 	}
 	return "unknown"
 }
