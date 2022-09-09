@@ -101,3 +101,37 @@ func (item erc20TokenData) Value() (driver.Value, error) {
 func (item *erc20TokenData) Scan(input interface{}) error {
 	return json.Unmarshal(input.([]byte), item)
 }
+
+// /----------------------------
+// Wallet log service
+type walletLogService struct{}
+
+func newWalletLogService() *walletLogService {
+	return &walletLogService{}
+}
+
+// insertNewERC20WalletLog Insert new log of ERC20 changes
+func (receiver *walletLogService) insertNewERC20WalletLog(db *gorm.DB, command WalletCommand, currentWallet Wallet) (ERC20WalletLog, error) {
+	erc20WalletLog := parseCommandToERC20WalletLog(command, currentWallet)
+	return erc20LogDAO.insertERC20WalletLog(db, erc20WalletLog)
+}
+
+// updateERC20WalletLog Change the status of ERC20Log in batches
+func (receiver *walletLogService) updateERC20WalletLog(db *gorm.DB, log ERC20WalletLog, status WalletLogStatus, newWallet Wallet) (ERC20WalletLog, error) {
+	log.Status = status.String()
+	log.SettledWallet = newWallet
+	return erc20LogDAO.updateERC20WalletLogStatus(db, log)
+}
+
+// insertNewERC1155WalletLog Insert an ERC1155 asset change log
+func (receiver *walletLogService) insertNewERC1155WalletLog(db *gorm.DB, command WalletCommand, currentWallet Wallet) (ERC1155WalletLog, error) {
+	erc1155WalletData := parseCommandToERC1155WalletLog(command, currentWallet)
+	return erc1155LogDAO.insertERC1155WalletLog(db, erc1155WalletData)
+}
+
+// updateERC1155WalletLog Change the state of the ERC1155 log
+func (receiver *walletLogService) updateERC1155WalletLog(db *gorm.DB, log ERC1155WalletLog, status WalletLogStatus, newWallet Wallet) (ERC1155WalletLog, error) {
+	log.Status = status.String()
+	log.SettledWallet = newWallet
+	return erc1155LogDAO.updateERC1155WalletLogStatus(db, log)
+}
