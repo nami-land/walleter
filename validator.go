@@ -1,4 +1,4 @@
-package wallet_center
+package walleter
 
 import (
 	"crypto/md5"
@@ -65,7 +65,7 @@ func (receiver walletValidator) generateNewSignHash(w Wallet) (string, error) {
 	if err != nil {
 		return "", err
 	}
-	
+
 	md5Value := md5Value(string(b))
 	return md5Value, nil
 }

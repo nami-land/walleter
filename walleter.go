@@ -1,4 +1,4 @@
-package wallet_center
+package walleter
 
 import (
 	"errors"
@@ -45,28 +45,35 @@ type ERC1155Command struct {
 	Values []uint64
 }
 
-type WalletCenter struct {
+// Walleter the library entry object.
+type Walleter struct {
 	db *gorm.DB
 }
 
 var feeChargerAccountId uint64
 
-func New(db *gorm.DB, chargerAccountId uint64) *WalletCenter {
+func New(db *gorm.DB, chargerAccountId uint64) *Walleter {
 	migration(db)
 	feeChargerAccountId = chargerAccountId
-	return &WalletCenter{db: db}
+	walleter := Walleter{db: db}
+	walleter.setFeeChargerAccount()
+	return &walleter
 }
 
-func (s *WalletCenter) SetFeeChargerAccount() (Wallet, error) {
+func (s *Walleter) setFeeChargerAccount() (Wallet, error) {
 	if feeChargerAccountId == 0 {
 		panic("Please assign official fee charge account.")
 	}
 
-	command := buildInitializedCommandFromAccount(feeChargerAccountId)
-	return s.HandleWalletCommand(s.db, command)
+	wallet, err := s.GetWalletByAccountId(feeChargerAccountId)
+	if err != nil && errors.Is(err, gorm.ErrRecordNotFound) {
+		command := buildInitializedCommandFromAccount(feeChargerAccountId)
+		return s.HandleWalletCommand(s.db, command)
+	}
+	return wallet, nil
 }
 
-func (s *WalletCenter) HandleWalletCommand(db *gorm.DB, command WalletCommand) (Wallet, error) {
+func (s *Walleter) HandleWalletCommand(db *gorm.DB, command WalletCommand) (Wallet, error) {
 	switch command.ActionType {
 	case Initialize:
 		return initWallet(db, command)
@@ -75,7 +82,7 @@ func (s *WalletCenter) HandleWalletCommand(db *gorm.DB, command WalletCommand) (
 	}
 }
 
-func (s *WalletCenter) GetWalletByAccountId(accountId uint64) (Wallet, error) {
+func (s *Walleter) GetWalletByAccountId(accountId uint64) (Wallet, error) {
 	return walletDAO.getWallet(s.db, accountId)
 }
 
@@ -117,7 +124,7 @@ func initWallet(db *gorm.DB, command WalletCommand) (Wallet, error) {
 			CheckSign:        "",
 		}
 
-		// 3. generator a new check sign
+		// 3. generate a new check sign
 		newCheckSign, err := newWalletValidator().generateNewSignHash(wallet)
 		if err != nil {
 			return err
@@ -154,9 +161,8 @@ func updateWallet(db *gorm.DB, command WalletCommand) (Wallet, error) {
 		return handleERC20Command(db, command)
 	case ERC1155AssetType:
 		return handleERC1155Command(db, command)
-	default:
-		return Wallet{}, errors.New("not support current asset type")
 	}
+	return Wallet{}, errors.New("not support current asset type")
 }
 
 // This function doesn't contain Transaction, so if we should wrap this function in a Transaction out of this function.
@@ -431,34 +437,26 @@ func newWalletLogService() *walletLogService {
 }
 
 // insertNewERC20WalletLog Insert new log of ERC20 changes
-func (receiver *walletLogService) insertNewERC20WalletLog(
-	db *gorm.DB, command WalletCommand, currentWallet Wallet,
-) (ERC20WalletLog, error) {
+func (receiver *walletLogService) insertNewERC20WalletLog(db *gorm.DB, command WalletCommand, currentWallet Wallet) (ERC20WalletLog, error) {
 	erc20WalletLog := parseCommandToERC20WalletLog(command, currentWallet)
 	return erc20LogDAO.insertERC20WalletLog(db, erc20WalletLog)
 }
 
 // updateERC20WalletLog Change the status of ERC20Log in batches
-func (receiver *walletLogService) updateERC20WalletLog(
-	db *gorm.DB, log ERC20WalletLog, status WalletLogStatus, newWallet Wallet,
-) (ERC20WalletLog, error) {
+func (receiver *walletLogService) updateERC20WalletLog(db *gorm.DB, log ERC20WalletLog, status WalletLogStatus, newWallet Wallet) (ERC20WalletLog, error) {
 	log.Status = status.String()
 	log.SettledWallet = newWallet
 	return erc20LogDAO.updateERC20WalletLogStatus(db, log)
 }
 
 // insertNewERC1155WalletLog Insert an ERC1155 asset change log
-func (receiver *walletLogService) insertNewERC1155WalletLog(
-	db *gorm.DB, command WalletCommand, currentWallet Wallet,
-) (ERC1155WalletLog, error) {
+func (receiver *walletLogService) insertNewERC1155WalletLog(db *gorm.DB, command WalletCommand, currentWallet Wallet) (ERC1155WalletLog, error) {
 	erc1155WalletData := parseCommandToERC1155WalletLog(command, currentWallet)
 	return erc1155LogDAO.insertERC1155WalletLog(db, erc1155WalletData)
 }
 
 // updateERC1155WalletLog Change the state of the ERC1155 log
-func (receiver *walletLogService) updateERC1155WalletLog(
-	db *gorm.DB, log ERC1155WalletLog, status WalletLogStatus, newWallet Wallet,
-) (ERC1155WalletLog, error) {
+func (receiver *walletLogService) updateERC1155WalletLog(db *gorm.DB, log ERC1155WalletLog, status WalletLogStatus, newWallet Wallet) (ERC1155WalletLog, error) {
 	log.Status = status.String()
 	log.SettledWallet = newWallet
 	return erc1155LogDAO.updateERC1155WalletLogStatus(db, log)

@@ -1,4 +1,4 @@
-package wallet_center
+package walleter
 
 import (
 	"database/sql/driver"

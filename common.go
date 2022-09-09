@@ -1,4 +1,4 @@
-package wallet_center
+package walleter
 
 type AssetType int
 
