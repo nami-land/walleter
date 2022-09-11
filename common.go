@@ -111,7 +111,7 @@ type CommandSourceType int
 
 const (
 	InGame   CommandSourceType = 0
-	BNBChain CommandSourceType = 1
+	BSC      CommandSourceType = 1
 	Ethereum CommandSourceType = 2
 )
 
@@ -119,8 +119,8 @@ func (s CommandSourceType) String() string {
 	switch s {
 	case InGame:
 		return "InGame"
-	case BNBChain:
-		return "BNBChain"
+	case BSC:
+		return "BSC"
 	case Ethereum:
 		return "Ethereum"
 	}
