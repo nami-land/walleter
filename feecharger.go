@@ -1,7 +1,6 @@
 package walleter
 
 import (
-	"errors"
 	"gorm.io/gorm"
 )
 
@@ -21,7 +20,7 @@ func (*feeChargerService) chargeFee(db *gorm.DB, token ERC20Command, userWallet 
 
 	index, userERC20TokenWallet := getUserSpecifiedERC20TokenWallet(userWallet, token.Token)
 	if index == -1 || userERC20TokenWallet.Balance < token.Value {
-		return userWallet, errors.New("insufficient balance for fee")
+		return userWallet, NoEnoughBalanceForFeeError
 	}
 
 	userERC20TokenWallet.Balance -= token.Value
@@ -34,10 +33,10 @@ func (*feeChargerService) chargeFee(db *gorm.DB, token ERC20Command, userWallet 
 
 	index, feeChargerERC20TokenWallet := getUserSpecifiedERC20TokenWallet(feeChargerWallet, token.Token)
 	if index == -1 {
-		return feeChargerWallet, errors.New("cannot get fee charger erc20 wallet")
+		return feeChargerWallet, CannotFindERC20WalletError
 	}
 	feeChargerERC20TokenWallet.Balance += token.Value
-	feeChargerERC20TokenWallet.TotalFee += token.Value
+	feeChargerERC20TokenWallet.TotalIncome += token.Value
 	feeChargerWallet.ERC20TokenData[index] = feeChargerERC20TokenWallet
 
 	// update fee charger account

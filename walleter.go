@@ -69,7 +69,14 @@ func New(db *gorm.DB, chargerAccountId uint64) *Walleter {
 func (s *Walleter) HandleWalletCommand(db *gorm.DB, command WalletCommand) (Wallet, error) {
 	switch command.ActionType {
 	case Initialize:
-		return initWallet(db, command)
+		wallet, err := s.GetWalletByAccountId(command.AccountId)
+		// if user's wallet doesn't exist, create a new one.
+		if err != nil && errors.Is(err, gorm.ErrRecordNotFound) {
+			command := NewInitWalletCommand(feeChargerAccountId)
+			return initWallet(db, command)
+		}
+		// otherwise return the old one.
+		return wallet, nil
 	default:
 		return updateWallet(db, command)
 	}
@@ -87,7 +94,7 @@ func (s *Walleter) setFeeChargerAccount() (Wallet, error) {
 
 	wallet, err := s.GetWalletByAccountId(feeChargerAccountId)
 	if err != nil && errors.Is(err, gorm.ErrRecordNotFound) {
-		command := buildInitializedCommandFromAccount(feeChargerAccountId)
+		command := NewInitWalletCommand(feeChargerAccountId)
 		return s.HandleWalletCommand(s.db, command)
 	}
 	return wallet, nil
@@ -163,16 +170,19 @@ func initWallet(db *gorm.DB, command WalletCommand) (Wallet, error) {
 }
 
 func updateWallet(db *gorm.DB, command WalletCommand) (Wallet, error) {
+	if command.AssetType == Other {
+		return Wallet{}, IncorrectAssetTypeError
+	}
 	switch command.AssetType {
 	case ERC20AssetType:
 		return handleERC20Command(db, command)
 	case ERC1155AssetType:
 		return handleERC1155Command(db, command)
 	}
-	return Wallet{}, errors.New("not support current asset type")
+	return Wallet{}, AssetTypeNotSupportError
 }
 
-func buildInitializedCommandFromAccount(accountId uint64) WalletCommand {
+func NewInitWalletCommand(accountId uint64) WalletCommand {
 	var erc20Commands []ERC20Command
 	for _, item := range supportedERC20Tokens {
 		erc20Commands = append(erc20Commands, ERC20Command{

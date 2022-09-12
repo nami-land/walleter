@@ -71,17 +71,17 @@ const (
 func (t WalletActionType) String() string {
 	switch t {
 	case Initialize:
-		return "Initialize"
+		return "initialize"
 	case Income:
-		return "TotalIncome"
+		return "income"
 	case Spend:
-		return "Spend"
+		return "spend"
 	case Deposit:
-		return "Deposit"
+		return "deposit"
 	case Withdraw:
-		return "Withdraw"
+		return "withdraw"
 	case ChargeFee:
-		return "ChargeFee"
+		return "fee"
 	}
 	return "unknown"
 }
@@ -98,11 +98,11 @@ const (
 func (s WalletLogStatus) String() string {
 	switch s {
 	case Pending:
-		return "Pending"
+		return "pending"
 	case Done:
-		return "Done"
+		return "done"
 	case Failed:
-		return "Failed"
+		return "failed"
 	}
 	return "unknown"
 }
@@ -118,11 +118,11 @@ const (
 func (s CommandSourceType) String() string {
 	switch s {
 	case InGame:
-		return "InGame"
+		return "game"
 	case BSC:
-		return "BSC"
+		return "bsc"
 	case Ethereum:
-		return "Ethereum"
+		return "ethereum"
 	}
 	return "unknown"
 }

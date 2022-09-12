@@ -1,11 +1,13 @@
 package walleter
 
 import (
-	"errors"
 	"gorm.io/gorm"
 )
 
 func handleERC1155Command(db *gorm.DB, command WalletCommand) (Wallet, error) {
+	if len(command.ERC1155Command.Values) != len(command.ERC1155Command.Ids) {
+		return Wallet{}, IncorrectERC1155ParamError
+	}
 	logService := newWalletLogService()
 	validator := newWalletValidator()
 
@@ -33,7 +35,7 @@ func handleERC1155Command(db *gorm.DB, command WalletCommand) (Wallet, error) {
 		}
 		userWallet, err = newFeeChargerService().chargeFee(db, fee, userWallet)
 		if err != nil {
-			_, err = logService.updateERC1155WalletLog(db, erc1155Log, Failed, userWallet)
+			logService.updateERC1155WalletLog(db, erc1155Log, Failed, userWallet)
 			return Wallet{}, err
 		}
 	}
@@ -65,10 +67,10 @@ func handleERC1155Command(db *gorm.DB, command WalletCommand) (Wallet, error) {
 			value := command.ERC1155Command.Values[index]
 			i := indexOfArray(ids, id)
 			if i == -1 {
-				return Wallet{}, errors.New("insufficient nft balance")
+				return Wallet{}, NoEnoughNFTError
 			} else {
 				if values[i] < value {
-					return Wallet{}, errors.New("insufficient nft balance")
+					return Wallet{}, NoEnoughNFTError
 				}
 				values[i] = values[i] - value
 			}
@@ -81,7 +83,7 @@ func handleERC1155Command(db *gorm.DB, command WalletCommand) (Wallet, error) {
 			}
 		}
 	default:
-		return Wallet{}, errors.New("not support action type")
+		return Wallet{}, ActionTypeNotSupportError
 	}
 
 	// 6. Generate new verification information

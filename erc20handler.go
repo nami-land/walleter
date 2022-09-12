@@ -1,7 +1,6 @@
 package walleter
 
 import (
-	"errors"
 	"gorm.io/gorm"
 )
 
@@ -34,7 +33,7 @@ func handleERC20Command(db *gorm.DB, command WalletCommand) (Wallet, error) {
 		}
 		userWallet, err = newFeeChargerService().chargeFee(db, fee, userWallet)
 		if err != nil {
-			_, err = logService.updateERC20WalletLog(db, erc20Log, Failed, userWallet)
+			logService.updateERC20WalletLog(db, erc20Log, Failed, userWallet)
 			return Wallet{}, err
 		}
 	}
@@ -56,7 +55,7 @@ func handleERC20Command(db *gorm.DB, command WalletCommand) (Wallet, error) {
 		for _, token := range command.ERC20Commands {
 			index, userERC20TokenWallet := getUserSpecifiedERC20TokenWallet(userWallet, token.Token)
 			if userERC20TokenWallet.Balance < token.Value {
-				return Wallet{}, errors.New("insufficient balance")
+				return Wallet{}, NoEnoughERC20BalanceError
 			}
 			userERC20TokenWallet.Balance -= token.Value
 			userERC20TokenWallet.TotalWithdraw += token.Value
@@ -85,7 +84,7 @@ func handleERC20Command(db *gorm.DB, command WalletCommand) (Wallet, error) {
 			}
 		}
 	default:
-		return Wallet{}, errors.New("not support action type")
+		return Wallet{}, ActionTypeNotSupportError
 	}
 
 	// 6. Generate new verification information
