@@ -171,7 +171,7 @@ func initWallet(db *gorm.DB, command WalletCommand) (Wallet, error) {
 
 func updateWallet(db *gorm.DB, command WalletCommand) (Wallet, error) {
 	if command.AssetType == Other {
-		return Wallet{}, IncorrectAssetTypeError
+		return Wallet{}, ErrIncorrectAssetType
 	}
 	switch command.AssetType {
 	case ERC20AssetType:
@@ -179,7 +179,7 @@ func updateWallet(db *gorm.DB, command WalletCommand) (Wallet, error) {
 	case ERC1155AssetType:
 		return handleERC1155Command(db, command)
 	}
-	return Wallet{}, AssetTypeNotSupportError
+	return Wallet{}, ErrAssetTypeNotSupport
 }
 
 func NewInitWalletCommand(accountId uint64) WalletCommand {

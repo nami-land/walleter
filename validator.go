@@ -4,6 +4,7 @@ import (
 	"crypto/md5"
 	"encoding/json"
 	"fmt"
+
 	"gorm.io/gorm"
 )
 
@@ -22,7 +23,7 @@ func (receiver walletValidator) validateWallet(wallet Wallet) (bool, error) {
 	}
 
 	if md5Value != checkSign {
-		return false, IncorrectCheckSignError
+		return false, ErrIncorrectCheckSign
 	}
 	return true, nil
 }

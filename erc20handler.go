@@ -55,7 +55,7 @@ func handleERC20Command(db *gorm.DB, command WalletCommand) (Wallet, error) {
 		for _, token := range command.ERC20Commands {
 			index, userERC20TokenWallet := getUserSpecifiedERC20TokenWallet(userWallet, token.Token)
 			if userERC20TokenWallet.Balance < token.Value {
-				return Wallet{}, NoEnoughERC20BalanceError
+				return Wallet{}, ErrNoEnoughERC20Balance
 			}
 			userERC20TokenWallet.Balance -= token.Value
 			userERC20TokenWallet.TotalWithdraw += token.Value
@@ -84,7 +84,7 @@ func handleERC20Command(db *gorm.DB, command WalletCommand) (Wallet, error) {
 			}
 		}
 	default:
-		return Wallet{}, ActionTypeNotSupportError
+		return Wallet{}, ErrActionTypeNotSupport
 	}
 
 	// 6. Generate new verification information

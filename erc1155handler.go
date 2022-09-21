@@ -6,7 +6,7 @@ import (
 
 func handleERC1155Command(db *gorm.DB, command WalletCommand) (Wallet, error) {
 	if len(command.ERC1155Command.Values) != len(command.ERC1155Command.Ids) {
-		return Wallet{}, IncorrectERC1155ParamError
+		return Wallet{}, ErrIncorrectERC1155Param
 	}
 	logService := newWalletLogService()
 	validator := newWalletValidator()
@@ -67,10 +67,10 @@ func handleERC1155Command(db *gorm.DB, command WalletCommand) (Wallet, error) {
 			value := command.ERC1155Command.Values[index]
 			i := indexOfArray(ids, id)
 			if i == -1 {
-				return Wallet{}, NoEnoughNFTError
+				return Wallet{}, ErrNoEnoughNFT
 			} else {
 				if values[i] < value {
-					return Wallet{}, NoEnoughNFTError
+					return Wallet{}, ErrNoEnoughNFT
 				}
 				values[i] = values[i] - value
 			}
@@ -83,7 +83,7 @@ func handleERC1155Command(db *gorm.DB, command WalletCommand) (Wallet, error) {
 			}
 		}
 	default:
-		return Wallet{}, ActionTypeNotSupportError
+		return Wallet{}, ErrActionTypeNotSupport
 	}
 
 	// 6. Generate new verification information

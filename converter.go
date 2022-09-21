@@ -13,7 +13,7 @@ type Number interface {
 func convertArrayToString[T Number](array []T, symbol string) string {
 	var temp = make([]string, len(array))
 	for k, v := range array {
-		temp[k] = fmt.Sprintf("%d", v)
+		temp[k] = fmt.Sprintf("%v", v)
 	}
 	return strings.Join(temp, symbol)
 }
