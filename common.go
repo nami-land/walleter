@@ -12,16 +12,69 @@ const (
 type ERC20TokenEnum int
 
 const (
-	NFISH ERC20TokenEnum = 0
-	BUSD  ERC20TokenEnum = 1
+	ETH ERC20TokenEnum = iota + 1
+	BNB
+	USDT
+	USDC
+	BUSD
+	NAMIX
+	FISHX
 )
+
+var supportedERC20Tokens = []ERC20Token{
+	{
+		Index:   1,
+		Symbol:  ETH.String(),
+		Decimal: 18,
+	},
+	{
+		Index:   2,
+		Symbol:  BNB.String(),
+		Decimal: 18,
+	},
+	{
+		Index:   3,
+		Symbol:  USDT.String(),
+		Decimal: 6,
+	},
+	{
+		Index:   4,
+		Symbol:  USDC.String(),
+		Decimal: 6,
+	},
+	{
+		Index:   5,
+		Symbol:  BUSD.String(),
+		Decimal: 18,
+	},
+	{
+		Index:   6,
+		Symbol:  NAMIX.String(),
+		Decimal: 18,
+	},
+	{
+		Index:   7,
+		Symbol:  FISHX.String(),
+		Decimal: 18,
+	},
+}
 
 func (t ERC20TokenEnum) String() string {
 	switch t {
-	case NFISH:
-		return "NFISH"
+	case ETH:
+		return "ETH"
+	case BNB:
+		return "BNB"
+	case USDC:
+		return "USDC"
+	case USDT:
+		return "USDT"
 	case BUSD:
 		return "BUSD"
+	case NAMIX:
+		return "NAMIX"
+	case FISHX:
+		return "FISHX"
 	}
 	return "unknown"
 }
@@ -30,19 +83,6 @@ type ERC20Token struct {
 	Index   uint64
 	Symbol  string
 	Decimal uint64
-}
-
-var supportedERC20Tokens = []ERC20Token{
-	{
-		Index:   0,
-		Symbol:  NFISH.String(),
-		Decimal: 18,
-	},
-	{
-		Index:   1,
-		Symbol:  BUSD.String(),
-		Decimal: 18,
-	},
 }
 
 // WalletActionType Actions for wallet command, we will change user's assets in wallet according to wallet action type.
@@ -110,19 +150,25 @@ func (s WalletLogStatus) String() string {
 type CommandSourceType int
 
 const (
-	InGame   CommandSourceType = 0
-	BSC      CommandSourceType = 1
-	Ethereum CommandSourceType = 2
+	InGame        CommandSourceType = 0
+	Ethereum      CommandSourceType = 1
+	GoerliTestnet CommandSourceType = 2
+	BSC           CommandSourceType = 3
+	BSCTestnet    CommandSourceType = 4
 )
 
 func (s CommandSourceType) String() string {
 	switch s {
 	case InGame:
 		return "game"
-	case BSC:
-		return "bsc"
 	case Ethereum:
 		return "ethereum"
+	case GoerliTestnet:
+		return "goerli_testnet"
+	case BSC:
+		return "bsc"
+	case BSCTestnet:
+		return "bsc_testnet"
 	}
 	return "unknown"
 }
