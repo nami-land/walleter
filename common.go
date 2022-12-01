@@ -12,7 +12,7 @@ const (
 type ERC20TokenEnum int
 
 const (
-	ETH ERC20TokenEnum = iota + 1
+	ETH ERC20TokenEnum = iota
 	BNB
 	USDT
 	USDC
