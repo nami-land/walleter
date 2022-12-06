@@ -1,4 +1,4 @@
-module github.com/neco-fun/walleter
+module github.com/nami-land/walleter
 
 go 1.19
 
